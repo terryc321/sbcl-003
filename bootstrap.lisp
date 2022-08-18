@@ -91,8 +91,20 @@
 
 
 ;; try see if we can use refresh from ncurses
+(define-alien-routine clear  int)
+(define-alien-routine raw  int)
+(define-alien-routine noecho  int)
+(define-alien-routine nodelay int
+  (w (* int))
+  (b boolean))
+
+
+(define-alien-routine cbreak  int)
+(define-alien-routine wgetch  int
+  (w (* int)))
+
 (define-alien-routine refresh  int)
-(define-alien-routine initscr  int)
+(define-alien-routine initscr  (* int))
 (define-alien-routine endwin  int)
 (define-alien-routine mvprintw
   int
@@ -101,21 +113,52 @@
   (str c-string))
 
 
-
 (format t "we survived to here anyhow ...~%")
+(defparameter tick 0)
+(defparameter initialised nil)
+(defparameter win nil)
+(defparameter msg 7)
 
-
-(defun flop()
-  (initscr)
+(defun start()
+  (setq win (initscr))
+  (clear)
+  (raw)
+  (noecho)
+  (nodelay win t)
+  (cbreak)  
   (mvprintw 5 5 "we are the champions !")
-  (refresh)
-  (sleep 3)
+  (refresh))
+
+(defun finish()
   (endwin))
 
 
-;; it loads
+(defun game-loop()
+  (unwind-protect
+  (if (not initialised) (start))
+  (catch 'done
+  (loop
+   (incf tick)
+   (mvprintw 6 5 (format nil "tick ~a " tick))
+   (refresh)
 
-(flop)
+   (let ((ch (wgetch win)))
+     (cond
+       ((= ch (char-code #\q))
+	;; throw toy out pram and quit game loop
+	(throw 'done t))
+       ((= ch (char-code #\a))
+	(incf msg)
+	(mvprintw msg 0 "key a pressed !\n"))
+       (t nil)))))
+    (finish)))
+
+;; q & a
+
+
+;; do a game loop 
+(game-loop)
+
 
 
 
