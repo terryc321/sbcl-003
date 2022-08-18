@@ -1,4 +1,10 @@
 
+;; reasoning about objects with mutation becomes impossible
+;; but it is possible to use clos without mutation
+;; involve extra copying
+
+;; nothing needs doing as elbow doesnt rotate
+
 
 
 ;; go through tetris.scm originally written in guile to convert to common
@@ -121,17 +127,9 @@
    (y
     :initarg :y
     :accessor y)
-   (shape
-    :initarg :shape
-    :accessor shape)
    (state
     :initarg :state
     :accessor state)))
-
-
-
-
-
 
 ;;#<STANDARD-CLASS TETRIS::PIECE>
 
@@ -139,16 +137,148 @@
 (defclass flat (piece)
   ())
 
+(defclass box (piece)
+  ())
+
+(defclass elbow (piece)
+  ())
+
+(defclass left-bend (piece)
+  ())
+
+(defclass right-bend (piece)
+  ())
+
+(defclass junction (piece)
+  ())
+
+;; ------------------------------------------------------------------
+;; class hierachy
+;;
+;;                      piece 
+;; _______________________|____________________________
+;;  |      |      |       |                |          |
+;; flat   box   elbow    left            right    junction
+;;
+;;---------------------------------------------------------------------
+
 (defun make-flat (x y)
   (make-instance 'flat       :x x
 			     :y y
-			     :shape 'flat
 			     :state 1))
 
+(defun make-box (x y)
+  (make-instance 'box        :x x
+			     :y y
+			     :state 1))
+
+(defun make-elbow (x y)
+  (make-instance 'elbow       :x x
+			     :y y
+			     :state 1))
+
+(defun make-left-bend (x y)
+  (make-instance 'left-bend  :x x
+			     :y y
+			     :state 1))
+
+(defun make-right-bend (x y)
+  (make-instance 'right       :x x
+			     :y y
+			     :state 1))
+
+(defun make-junction (x y)
+  (make-instance 'junction       :x x
+			     :y y
+			     :state 1))
+
+;; ---------------------------------------------------
+;; copy constructors
+;;
+;; ---------------------------------------------------
+(defmethod copy((p flat))  
+  (make-instance 'flat
+		 :x (x p)
+		 :y (y p)
+		 :state (state p)))
+
+(defmethod copy((p box))  
+  (make-instance 'box
+		 :x (x p)
+		 :y (y p)
+		 :state (state p)))
+
+(defmethod copy((p elbow))  
+  (make-instance 'flat
+		 :x (x p)
+		 :y (y p)
+		 :state (state p)))
+
+(defmethod copy((p left-bend))  
+  (make-instance 'flat
+		 :x (x p)
+		 :y (y p)
+		 :state (state p)))
+
+(defmethod copy((p right-bend))  
+  (make-instance 'flat
+		 :x (x p)
+		 :y (y p)
+		 :state (state p)))
+
+(defmethod copy((p junction))  
+  (make-instance 'flat
+		 :x (x p)
+		 :y (y p)
+		 :state (state p)))
+
+;; ----------------------------------------
+(defmethod left((p piece))
+  (let* ((c (copy p))
+	 (x (x c)))
+    (setf (x c) (- x 1))
+    c))
+
+(defmethod right((p piece))
+  (let* ((c (copy p))
+	 (x (x c)))
+    (setf (x c) (+ x 1))
+    c))
+
+(defmethod down((p piece))
+  (let* ((c (copy p))
+	 (y (y c)))
+    (setf (y c) (- y 1))
+    c))
 
 
 
+(defun any-squares-list-are-x-y( xs x-y)
+  (cond
+   ((null xs) nil)
+   ((equalp (car xs) x-y) x-y)
+   (t (any-squares-list-are-x-y (cdr xs) x-y))))
 
+
+;; conflict-p specialised to flat pieces 
+(defmethod conflict-p((p piece) x-y)
+  (let ((squares (realise p)))
+    (any-squares-list-are-x-y squares x-y)))
+
+;; --------------------------------------
+
+;; input-output doesnt like to pass object throuhgt reutrns nil
+
+(defmethod view((p piece))
+  (format t "x : ~a , y : ~a , state : ~a , reals : ~a~%"
+	  (x p)
+	  (y p)
+	  (state p)
+	  (realise p))
+  p)
+
+
+;; --------------------------------------
 
 
 (defparameter p1 (make-flat 2 3))
@@ -164,10 +294,29 @@
 
 (y p1)
 
-(shape p1)
+;;(shape p1)
 
 (state p1)
 
+
+
+
+(realise p1)
+;;((0 3) (1 3) (2 3) (3 3))
+
+;; expect all squares above cause a conflict , except square (5 5) which is not in conflict
+(mapcar (lambda (xy) (conflict-p p1 xy)) '((0 3)(1 3)(2 3)(3 3)(5 5)))
+;;((0 3) (1 3) (2 3) (3 3) NIL)
+
+;; ideally want a generic copy
+
+
+
+
+
+
+
+;; ---------------------------------------
 
 (defmethod realise((p flat))
   (let ((state (state p))
@@ -187,92 +336,20 @@
      (t (error "realise-flat")))))
 
 
-(defun any-squares-list-are-x-y( xs x-y)
-  (cond
-   ((null xs) nil)
-   ((equalp (car xs) x-y) x-y)
-   (t (any-squares-list-are-x-y (cdr xs) x-y))))
-
-
-;; conflict-p specialised to flat pieces 
-(defmethod conflict-p((p piece) x-y)
-  (let ((squares (realise p)))
-    (any-squares-list-are-x-y squares x-y)))
-
-
-(realise p1)
-;;((0 3) (1 3) (2 3) (3 3))
-
-;; expect all squares above cause a conflict , except square (5 5) which is not in conflict
-(mapcar (lambda (xy) (conflict-p p1 xy)) '((0 3)(1 3)(2 3)(3 3)(5 5)))
-;;((0 3) (1 3) (2 3) (3 3) NIL)
-
-;; (defmethod copy((p flat-piece))  
-;;   (make-instance 'flat-piece
-;; 		 :x (x p)
-;; 		 :y (y p)
-;; 		 :shape 'flat
-;; 		 :state (state p)))
-
-;; side effects - moving the piece around the board
-(defmethod left((p piece))
-  (setf (x p) (- (x p) 1)))
-
-(defmethod right((p piece))
-  (setf (x p) (+ (x p) 1)))
-
-(defmethod down((p piece))
-  (setf (y p) (- (y p) 1)))
-
 (defmethod rotate-right((p flat))
-  (let ((n (state p)))
-    (cond
-      ((= n 1) (setf (state p) 2))
-      ((= n 2) (setf (state p) 1)))))
+  (let* ((c (copy p))
+	 (n (state c)))
+    (setf (state c)
+	  (cond
+	    ((= n 1) 2)
+	    ((= n 2) 1)
+	    (t (error "rotate right flat"))))
+    c))
 
 (defmethod rotate-left((p flat))
   (rotate-right p))
 
-(defmethod view((p piece))
-  (format t "x : ~a , y : ~a , shape : ~a , state : ~a , reals : ~a~%"
-	  (x p)
-	  (y p)
-	  (shape p)
-	  (state p)
-	  (realise p)))
-
-
 ;; -------------------------------------------------------
-;; every piece has
-;;
-;;  class
-;;  type
-;;   x
-;;   y
-;;   state
-
-
-;; flat
-;; box
-;; elbow
-;; left-bend
-;; right-bend
-;; junction
-
-;; ---------------- box --------------------------------------
-;; boxes only have one shape
-;;
-;; box  x o   thats it!
-;;      x x
-;;
-
-;; flat inherits from piece 
-(defclass box (piece)
-  ())
-
-(defun make-box(x y)
-  (make-instance 'box :x x :y y :shape 'box :state 1))
-
 
 (defparameter b1 (make-box 3 5))
 
@@ -290,13 +367,178 @@
 
 ;; nothing needs doing as box doesnt rotate
 (defmethod rotate-right((p box))
-  t)
+  p)
 
 (defmethod rotate-left((p box))
-  t)
+  p)
+
 
 
 ;;------------------------------------------------------------
+
+
+(defparameter e1 (make-elbow 3 5))
+
+(defmethod realise((p elbow))
+  (let ((state (state p))
+	(x     (x p))
+	(y     (y p)))
+    (cond
+     ((= state 1)
+      (list 	`(,(- x 1) ,(- y 0))
+		`(,(- x 1) ,(- y 1))
+		`(,(- x 1) ,(- y 2))
+		`(,(+ x 0) ,(- y 2))))
+     ((= state 2)
+      (list 	`(,(- x 1) ,(- y 1))
+		`(,(- x 1) ,(- y 0))
+		`(,(+ x 0) ,(- y 0))
+		`(,(+ x 1) ,(- y 0))))
+     ((= state 3)
+      (list 	`(,(- x 1) ,(- y 0))
+		`(,(- x 0) ,(- y 0))
+		`(,(- x 0) ,(- y 1))
+		`(,(+ x 0) ,(- y 2))))
+     ((= state 4)
+      (list 	`(,(+ x 1) ,(- y 0))
+		`(,(+ x 1) ,(- y 1))
+		`(,(+ x 0) ,(- y 1))
+		`(,(- x 1) ,(- y 1))))
+     (t (error "realise-elbow")))))
+
+
+(defmethod rotate-right((p elbow))
+  (let* ((c (copy p))
+	 (n (state p)))
+    (setf (state c)
+	  (cond
+	    ((= n 1) 2)
+	    ((= n 2) 3)
+	    ((= n 3) 4)
+	    ((= n 4) 1)
+	    (t (error "rotate-right on elbow"))))
+    c))
+
+
+(defmethod rotate-left((p elbow))
+  (let* ((c (copy p))
+	 (n (state p)))
+    (setf (state c)
+	  (cond
+	    ((= n 1) 4)
+	    ((= n 2) 1)
+	    ((= n 3) 2)
+	    ((= n 4) 3)
+	    (t (error "rotate-right on elbow"))))
+    c))
+
+
+
+;; --------------------------------------------------------------
+;; make-left-bend
+;; realise
+;; rotate-left
+;; rotate-right
+;;
+;; state  1       2      
+;;
+;;       x o       o x   
+;;       x x     x x     
+;;         x             
+;;
+
+(defparameter left-1 (make-left-bend 3 5))
+
+(defmethod realise((p left-bend))
+  (let ((state (state p))
+	(x     (x p))
+	(y     (y p)))
+    (cond
+     ((= state 1)
+      (list 	`(,(- x 1) ,(- y 0))
+		`(,(- x 1) ,(- y 1))
+		`(,(- x 0) ,(- y 1))
+		`(,(+ x 0) ,(- y 2))))
+     ((= state 2)
+      (list 	`(,(- x 1) ,(- y 1))
+		`(,(- x 0) ,(- y 1))
+		`(,(+ x 0) ,(- y 0))
+		`(,(+ x 1) ,(- y 0))))
+     (t (error "realise-left-bend")))))
+
+(defmethod rotate-right((p left-bend))
+  (let* ((c (copy p))
+	 (n (state c)))
+    (setf (state c)
+	  (cond
+	    ((= n 1) 2)
+	    ((= n 2) 1)
+	    (t (error "rotate left-bend"))))
+    c))
+
+(defmethod rotate-left((p left-bend))
+  (rotate-right p))
+
+;;-------------------------------------------------
+
+;;-------------------------------------------------
+;; make-right-bend
+;; realise
+;; rotate-left
+;; rotate-right
+;;
+;;
+;; state    1        2
+;;
+;;         o x    x o       
+;;         x x      x x   
+;;         x            
+;;
+;;
+
+
+(defparameter right-1 (make-right-bend 3 5))
+
+(defmethod realise((p left-bend))
+  (let ((state (state p))
+	(x     (x p))
+	(y     (y p)))
+    (cond
+     ((= state 1)
+      (list 	`(,(- x 0) ,(- y 2))
+		`(,(- x 0) ,(- y 1))
+		`(,(+ x 1) ,(- y 1))
+		`(,(+ x 1) ,(- y 0))))
+     ((= state 2)
+      (list 	`(,(- x 1) ,(- y 0))
+		`(,(- x 0) ,(- y 0))
+		`(,(+ x 0) ,(- y 1))
+		`(,(+ x 1) ,(- y 1))))
+     (t (error "realise-right-bend")))))
+
+
+(define (rotate-right-right-bend piece)
+  (list (assoc 'class piece)
+	(assoc 'type piece)
+	(assoc 'x piece)
+	(assoc 'y piece)
+	(let ((n (assoc-value 'state piece)))
+	  (cond
+	   ((= n 1) (list 'state 2))
+	   ((= n 2) (list 'state 1))
+	   (else (error "right-bends only states are 1 and 2 "))))))
+
+
+(define (rotate-left-right-bend piece)
+  (list (assoc 'class piece)
+	(assoc 'type piece)
+	(assoc 'x piece)
+	(assoc 'y piece)
+	(let ((n (assoc-value 'state piece)))
+	  (cond
+	   ((= n 1) (list 'state 2))
+	   ((= n 2) (list 'state 1))
+	   (else (error "right-bends only states are 1 and 2 "))))))
 
 
 
