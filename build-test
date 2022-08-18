@@ -1,0 +1,19 @@
+#!/bin/bash
+
+
+
+gcc -c demo.c
+
+ld -shared -o demo.so -fPIC demo.o 
+
+#sbcl --script "boostrap.lisp"
+
+gcc -c test.c 
+
+ld -o test.so -shared -fPIC -lncurses test.o
+
+
+
+
+
+
