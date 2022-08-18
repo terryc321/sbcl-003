@@ -127,7 +127,12 @@
   (nodelay win t)
   (cbreak)  
   (mvprintw 5 5 "we are the champions !")
+  (loop for y from 0 to 30 do
+    (loop for x from 30 to 60 do
+      (mvprintw y x ".")))
   (refresh))
+
+
 
 (defun finish()
   (endwin))

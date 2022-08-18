@@ -119,8 +119,10 @@
   (s c-string))
 
 ;; ----------------------
-;; 
+;; sbcl        c equivalent
 ;; ---------------------
+;; void        void
+;; boolean     boolean/int?
 ;; int         int
 ;; c-string    char *
 ;;
@@ -151,12 +153,6 @@
 (define-alien-routine empty2
   void
   (s c-string))
-
-
-
-
-
-
 
 ;; -----------------------------------------------------------
 ;; ncurses initscr
