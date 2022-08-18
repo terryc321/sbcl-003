@@ -1,4 +1,11 @@
 
+;; reasoning
+;; used setf -- should we eliminate this from code
+;;
+;; provably correct implementation
+;;
+
+
 ;; reasoning about objects with mutation becomes impossible
 ;; but it is possible to use clos without mutation
 ;; involve extra copying
@@ -183,7 +190,7 @@
 			     :state 1))
 
 (defun make-right-bend (x y)
-  (make-instance 'right       :x x
+  (make-instance 'right-bend :x x
 			     :y y
 			     :state 1))
 
@@ -209,25 +216,25 @@
 		 :state (state p)))
 
 (defmethod copy((p elbow))  
-  (make-instance 'flat
+  (make-instance 'elbow
 		 :x (x p)
 		 :y (y p)
 		 :state (state p)))
 
 (defmethod copy((p left-bend))  
-  (make-instance 'flat
+  (make-instance 'left-bend
 		 :x (x p)
 		 :y (y p)
 		 :state (state p)))
 
 (defmethod copy((p right-bend))  
-  (make-instance 'flat
+  (make-instance 'right-bend
 		 :x (x p)
 		 :y (y p)
 		 :state (state p)))
 
 (defmethod copy((p junction))  
-  (make-instance 'flat
+  (make-instance 'junction
 		 :x (x p)
 		 :y (y p)
 		 :state (state p)))
@@ -499,7 +506,7 @@
 
 (defparameter right-1 (make-right-bend 3 5))
 
-(defmethod realise((p left-bend))
+(defmethod realise((p right-bend))
   (let ((state (state p))
 	(x     (x p))
 	(y     (y p)))
@@ -517,28 +524,95 @@
      (t (error "realise-right-bend")))))
 
 
-(define (rotate-right-right-bend piece)
-  (list (assoc 'class piece)
-	(assoc 'type piece)
-	(assoc 'x piece)
-	(assoc 'y piece)
-	(let ((n (assoc-value 'state piece)))
+(defmethod rotate-right((p right-bend))
+  (let* ((c (copy p))
+	 (n (state c)))
+    (setf (state c)
 	  (cond
-	   ((= n 1) (list 'state 2))
-	   ((= n 2) (list 'state 1))
-	   (else (error "right-bends only states are 1 and 2 "))))))
+	    ((= n 1) 2)
+	    ((= n 2) 1)
+	    (t (error "rotate right-bend"))))
+    c))
+
+(defmethod rotate-left((p right-bend))
+  (rotate-right p))
 
 
-(define (rotate-left-right-bend piece)
-  (list (assoc 'class piece)
-	(assoc 'type piece)
-	(assoc 'x piece)
-	(assoc 'y piece)
-	(let ((n (assoc-value 'state piece)))
+;; ------------------- t junction------------------------------------
+;;
+;; make-junction
+;; realise
+;; rotate-left
+;; rotate-right
+;;
+;; 
+;; state    1          2        3            4
+;;
+;;           o         o        o          x o x 
+;;         x x       x x x      x x          x 
+;;           x                  x             
+;;
+;; ------------------------------------------------------------------
+
+
+(defparameter junction-1 (make-junction 3 5))
+
+(defmethod realise((p junction))
+  (let ((state (state p))
+	(x     (x p))
+	(y     (y p)))
+    (cond
+     ((= state 1)
+      (list 	`(,(- x 0) ,(- y 0))
+		`(,(- x 0) ,(- y 1))
+		`(,(- x 0) ,(- y 2))
+		`(,(- x 1) ,(- y 1))))
+     ((= state 2)
+      (list 	`(,(- x 0) ,(- y 0))
+		`(,(- x 1) ,(- y 1))
+		`(,(+ x 0) ,(- y 1))
+		`(,(+ x 1) ,(- y 1))))
+     ((= state 3)
+      (list 	`(,(- x 0) ,(- y 0))
+		`(,(- x 0) ,(- y 1))
+		`(,(- x 0) ,(- y 2))
+		`(,(+ x 1) ,(- y 1))))
+     ((= state 4)
+      (list 	`(,(- x 1) ,(- y 0))
+		`(,(+ x 0) ,(- y 0))
+		`(,(+ x 1) ,(- y 0))
+		`(,(+ x 0) ,(- y 1))))
+     (else (error "realise-junction")))))
+
+
+(defmethod rotate-right((p junction))
+  (let* ((c (copy p))
+	 (n (state c)))
+    (setf (state c)
 	  (cond
-	   ((= n 1) (list 'state 2))
-	   ((= n 2) (list 'state 1))
-	   (else (error "right-bends only states are 1 and 2 "))))))
+	   ((= n 1) 2)
+	   ((= n 2) 3)
+	   ((= n 3) 4)
+	   ((= n 4) 1)
+	   (else (error "junctions only states are 1 and 2 and 3 and 4"))))
+    c))
+
+(defmethod rotate-left((p junction))
+  (let* ((c (copy p))
+	 (n (state c)))
+    (setf (state c)
+	  (cond
+	    ((= n 1) 4)
+	    ((= n 2) 1)
+	    ((= n 3) 2)
+	    ((= n 4) 3)
+	    (else (error "junctions only states are 1 and 2 and 3 and 4"))))
+    c))
+
+
+
+;; -------------------  -------------------------------------
+
 
 
 
