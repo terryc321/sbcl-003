@@ -10,7 +10,6 @@
 
 (in-package "CURSES")
 
-
 (load-shared-object "/usr/lib/x86_64-linux-gnu/libncurses.so.6.2")
 
 ;; try see if we can use refresh from ncurses
@@ -74,32 +73,6 @@
 (nth 2 '(a b c))
 
 (nth 3 '(a b c))
-
-;;
-;; nth is off by one , do we use nth elsewhere in scheme code ?
-;;
-;; (defun nth
-;;   (lambda (n xs)
-;;     ;; (display "n = ")
-;;     ;; (display n)
-;;     ;; (newline)
-;;     ;; (display "xs = ")
-;;     ;; (display xs)
-;;     ;; (newline)
-;;     (cond ((null? xs) (error "no car cdr of null"))
-;; 	  ((= n 1) (car xs))
-;; 	  (#t (nth (- n 1) (cdr xs))))))
-
-;; already defined in common lisp
-;;
-;; (defun first (lambda (xs) (nth 1 xs)))
-;; (defun second (lambda (xs) (nth 2 xs)))
-;; (defun third (lambda (xs) (nth 3 xs)))
-;; (defun fourth (lambda (xs)(nth 4 xs)))
-;; (defun fifth (lambda (xs) (nth 5 xs)))
-
-;; scheme (define (f ...))
-;; lisp   (defun f(...))
 
 (defun assoc-value( key obj)
   (second (assoc key obj)))
@@ -663,77 +636,9 @@
    (t (scan-board x-y (cdr board)))))
 
 
-;; (defun newline()
-;;   (format t "~%"))
-
-
-
-;; ;; if square is occupied then put a # otherwise a dot .
-;; (defun show-board-squares( x y board)
-;;   (cond
-;;    ((> x 11) (newline)(margin)(show-board-squares 0 (- y 1) board))
-;;    ((< y 0) (newline))
-;;    (t    
-;;     (cond
-;;      ((scan-board (list x y) board)
-;;       (format t " X "))
-;;      (t
-;;       (format t " . ")))
-;;     (show-board-squares (+ x 1) y board))))
-
 
 (defun display(msg)
   (format t "~a" msg))
-
-
-
-
-;; (defun show-board(board)
-;;   (newline)
-;;   (newline)
-;;   (newline)
-;;   (newline)
-;;   (newline)
-;;   (newline)
-;;   (newline)
-;;   (newline)
-;;   (newline)
-;;   (newline)
-;;   (newline)
-;;   (newline)
-;;   (newline)
-;;   (newline)
-;;   (newline)
-;;   (newline)
-;;   (margin)(display " T E T R I Z   v  1 . 0") (newline)
-;;   (newline)
-;;   (newline)
-;;   (margin)
-;;   (display "_ _ _ _ _ _ _ _ _ _ _ _")
-;;   (newline)
-;;   (newline)
-;;   (margin)
-;;   (show-board-squares 0 21 board)
-;;   (newline)
-;;   (margin)
-;;   (display "_ _ _ _ _ _ _ _ _ _ _ _")
-;;   (newline)
-;;   (newline)
-;;   (newline)
-;;   (newline)
-;;   (newline)
-;;   (newline)
-;;   (newline)
-;;   (newline)
-;;   (newline)
-;;   (newline)
-;;   (newline)
-;;   (newline)
-;;   (newline)
-;;   (newline)
-;;   (newline)
-;;   (newline)
-;; )
 
 
 
@@ -915,14 +820,33 @@
 ;; generate a new board -- probably a static board
 ;; if it got setq'd , wonder if calling new-board again would reveal the fact its a static board
 ;; or is it indeed a fresh board ?
+
+;; make board like a U-shape
+;; with an open top  11 by 22   (0,0) to (11,21) inclusive
+;; borders at x=0 and x=11
+;; border  at y=0
+;; no border at y=21 because think pieces dropped onto board and it thinks board is full when its not
+;;
+;;
+;;  x   x
+;;  x   x
+;;  x x x
+;;
+
+
+;; common lisp has 2 dimension arrays
+
 (defun new-board()
-  (let ((board '((0 0)(1 0) (2 0)(3 0)(4 0) (5 0)(6 0)(7 0)(8 0)(9 0)(10 0)(11 0)
-		 (0 1)(0 2) (0 3)(0 4)(0 5) (0 6)(0 7)(0 8)(0 9)(0 10)(0 11)(0 12)(0 13)(0 14)(0 15)(0 16)(0 17)(0 18)(0 19)(0 20)(0 21)
-		 (11 1)(11 2) (11 3)(11 4)(11 5) (11 6)(11 7)(11 8)(11 9)(11 10)(11 11)(11 12)(11 13)(11 14)(11 15)(11 16)(11 17)(11 18)(11 19)(11 20)(11 21)
-		 (0 21)(1 21) (2 21)(3 21)(4 21) (5 21)(6 21)(7 21)(8 21)(9 21)(10 21)(11 21))))
+  (let ((board (make-array 12 22)))
+    (loop for x from 0 to 11 do
+	  (setf (aref board x 0) 1))
+    (loop for y from 0 to 21 do
+      (setq (aref board 0 y) 1)
+      (setf (aref board 11 y) 1))
     board))
 
 
+    
 
 ;; initialise the screen for sbcl
 (defun initialise-ncurses()
@@ -985,13 +909,6 @@
 	(y 20)
 	(n (random 6)))
     (funcall (nth n tetris::*tetris-piece-constructors*) x y)))
-
-
-
-
-
-
-
 
 
 
@@ -1064,7 +981,8 @@
 ;; to start the game , call the run procedure 
 ;;> (run)
 
-(run)
+;;(run)
+
 
 
 
