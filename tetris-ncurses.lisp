@@ -932,13 +932,10 @@
   (noecho)
   (nodelay win t)
   (cbreak)  
-  (mvprintw 5 5 "we are the champions !")
-  
-  ;; (loop for y from 0 to 30 do
-  ;;   (loop for x from 30 to 60 do
-  ;;     (mvprintw y x ".")))
-  
-  (refresh))
+  (mvprintw 5 5 "we are the champions !"))
+
+ 
+
 
 
 ;; clean up ncurses -- may need to clr end of line , so it does not trash the terminal on exit
@@ -957,13 +954,17 @@
 ;; 0's 21's are bottom and top of tetris board
 
 (defun show-board(board)
+  ;; blank out pieces 1,1 to 10,20 inclusive
+  (loop for y from 1 to 20 do
+	(loop for x from 1 to 10 do	      
+	      (mvprintw (- 30 y) (+ (* x 2) 30) " ")))
   (dolist (sq board)
     (let* ((x (first sq))
 	   (y (second sq))
-	   (screen-x (+ x 30))
+	   (screen-x (+ (* x 2) 30)) ;; space X's apart a bit more
 	   (screen-y (- 30 y)))  ;; may need to flip this
       (mvprintw screen-y screen-x "X")
-      (refresh))))
+      )))
 
 
 ;; test knowledge of prog
@@ -989,19 +990,20 @@
 
 
 
+
+
 ;; Using goto if you can believe it
 (defun game-loop(board)
   (let ((piece (new-random-top-piece)))
     (prog ()
       top
-      (show-board (tetris::combine-piece-and-board piece board))
-
+       (show-board (tetris::combine-piece-and-board piece board))
+       (incf *tick*)
+       (mvprintw 6 5 (format nil "*tick* ~a " *tick*))
+       (refresh)
        (when (tetris::any-conflicts? piece board)
 	(throw 'game-over t))
 
-      (incf *tick*)
-      (mvprintw 6 5 (format nil "*tick* ~a " *tick*))
-      (refresh)
 
       ;; check for key presses 
       (let ((ch (wgetch win)))
