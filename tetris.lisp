@@ -5,8 +5,14 @@
 ;; provably correct implementation ?
 ;;
 
+
+(defpackage "TETRIS"
+  (:use "CL" "CL-USER"))
+
+
 (defpackage "CURSES"
   (:use "CL" "CL-USER" "SB-ALIEN"))
+
 
 (in-package "CURSES")
 
@@ -49,22 +55,13 @@
 ;; reasoning about objects with mutation becomes impossible
 ;; but it is possible to use clos without mutation
 ;; involve extra copying
-
 ;; nothing needs doing as elbow doesnt rotate
-
-
-
 ;; go through tetris.scm originally written in guile to convert to common
-
-
 ;; not really sure about packages , just want a package with common lisp available
-(defpackage "TETRIS"
-  (:use "CL" "CL-USER"))
-
 ;; lets use it then
 (in-package "TETRIS")
-
 ;; ------------------------ TETRIS PACKAGE  ------------------
+
 
 
 
@@ -110,23 +107,21 @@
     (nth (random len) xs)))
 
 
-;; sanity check 10000 values present
-;; array of 6 items 0th index to 5th index , 6th index out of bounds - be array of 7 items not 6
-(let ((arr (make-array 6)))
-  (loop for i from 1 to 100000 do
-    (let ((n (one-of '(0 1 2 3 4 5))))
-      (incf (aref arr n))))
-  (format t "after 10000 iterations arr = ~a ~%" arr)
-  (let ((sum (reduce (lambda (a b)( + a b)) arr))
-	(ratios (make-array 6)))
-    (format t "sum of items in arr = ~a ~%" sum)
-    (map-into ratios (lambda (x)(floor (float (* 100 (/ x sum))))) arr)
-    (format t "ratios = ~a ~%" ratios)))
-
+;; ;; sanity check 10000 values present
+;; ;; array of 6 items 0th index to 5th index , 6th index out of bounds - be array of 7 items not 6
+;; (let ((arr (make-array 6)))
+;;   (loop for i from 1 to 100000 do
+;;     (let ((n (one-of '(0 1 2 3 4 5))))
+;;       (incf (aref arr n))))
+;;   (format t "after 10000 iterations arr = ~a ~%" arr)
+;;   (let ((sum (reduce (lambda (a b)( + a b)) arr))
+;; 	(ratios (make-array 6)))
+;;     (format t "sum of items in arr = ~a ~%" sum)
+;;     (map-into ratios (lambda (x)(floor (float (* 100 (/ x sum))))) arr)
+;;     (format t "ratios = ~a ~%" ratios)))
 ;; map-into destructive but clean map over arrays nice
 ;; add up values in an array
 (reduce (lambda (a b)(+ a b)) #(1 2))
-
 ;; -------------------------------------------------------
 ;; line 72 in tetris.scm
 
@@ -154,8 +149,6 @@
    (state
     :initarg :state
     :accessor state)))
-
-
 ;;#<STANDARD-CLASS TETRIS::PIECE>
 
 ;; flat inherits from piece 
@@ -189,81 +182,51 @@
 
 
 
-(dribble (format nil "/home/terry/projects/ffi/sbcl-002/logs/~a.tetris.log" (get-universal-time)))
-
-(trace
-;; ----- tetris routines ----
-tetris::assoc-value
-tetris::one-of
-tetris::make-flat 
-tetris::make-box 
-tetris::make-elbow 
-tetris::make-left-bend 
-tetris::make-right-bend 
-tetris::make-junction 
-tetris::any-squares-list-are-x-y
-tetris::any-conflicts?
-tetris::filter
-tetris::tally-row
-tetris::move-all-items-down-if-above-row
-tetris::tally-and-move
-tetris::tetris-square-occupied-p
-tetris::tetris-square-empty
-tetris::tetris-full-row-p
-tetris::tetris-eliminate-row
-tetris::tetris-scroll-board-down
-tetris::eliminate-completed-rows
-tetris::combine-piece-and-board
-
-;; ---- curses routines -----
-curses::new-board
-curses::initialise-ncurses
-curses::cleanup-ncurses
-curses::tetris-to-screen-x
-curses::tetris-to-screen-y
-curses::tetris-put-to-screen
-curses::show-board
-curses::show-piece
-curses::show-piece-and-board
-curses::experiment
-curses::new-random-top-piece
-curses::game-loop
-curses::run
-)
+(defun in-bounds(x y)
+  (and (integerp x)
+       (integerp y)
+       (>= x 1)
+       (<= x 10)
+       (>= y 1)
+       (<= y 20)))
 
 
-
+       
 
 
 ;; assert x y must be in range on the tetris board between (0,0) and (11,21)
-
 (defun make-flat (x y)
-  (assert
+  (assert (in-bounds x y))
   (make-instance 'flat       :x x
 			     :y y
 			     :state 1))
 
 (defun make-box (x y)
+  (assert (in-bounds x y))
   (make-instance 'box        :x x
 			     :y y
 			     :state 1))
 
 (defun make-elbow (x y)
+  (assert (in-bounds x y))
   (make-instance 'elbow       :x x
 			     :y y
 			     :state 1))
 
 (defun make-left-bend (x y)
+  (assert (in-bounds x y))
   (make-instance 'left-bend  :x x
 			     :y y
 			     :state 1))
 
 (defun make-right-bend (x y)
+  (assert (in-bounds x y))
   (make-instance 'right-bend :x x
 			     :y y
 			     :state 1))
 
 (defun make-junction (x y)
+  (assert (in-bounds x y))
   (make-instance 'junction       :x x
 			     :y y
 			     :state 1))
@@ -342,9 +305,7 @@ curses::run
     (any-squares-list-are-x-y squares x-y)))
 
 ;; --------------------------------------
-
 ;; input-output doesnt like to pass object throuhgt reutrns nil
-
 (defmethod view((p piece))
   (format t "x : ~a , y : ~a , state : ~a , reals : ~a~%"
 	  (x p)
@@ -352,11 +313,7 @@ curses::run
 	  (state p)
 	  (realise p))
   p)
-
-
 ;; --------------------------------------
-
-
 ;; ---------------------------------------
 
 (defmethod realise((p flat))
@@ -393,7 +350,7 @@ curses::run
 ;; -------------------------------------------------------
 (defparameter p1 (make-flat 2 3))
 
-(defparameter p2 (make-flat 0 0))
+(defparameter p2 (make-flat 1 1))
 
 (defparameter p3 (make-flat 4 5))
 
@@ -419,11 +376,7 @@ curses::run
 ;;((0 3) (1 3) (2 3) (3 3) NIL)
 
 ;; ideally want a generic copy
-
-
-
 ;; ------------------------------------------------------
-
 (defparameter b1 (make-box 3 5))
 
 (defmethod realise((p box))
@@ -448,8 +401,6 @@ curses::run
 
 
 ;;------------------------------------------------------------
-
-
 (defparameter e1 (make-elbow 3 5))
 
 (defmethod realise((p elbow))
@@ -519,7 +470,6 @@ curses::run
 ;;       x x     x x     
 ;;         x             
 ;;
-
 (defparameter left-1 (make-left-bend 3 5))
 
 (defmethod realise((p left-bend))
@@ -553,7 +503,6 @@ curses::run
   (rotate-right p))
 
 ;;-------------------------------------------------
-
 ;;-------------------------------------------------
 ;; make-right-bend
 ;; realise
@@ -568,8 +517,6 @@ curses::run
 ;;         x            
 ;;
 ;;
-
-
 (defparameter right-1 (make-right-bend 3 5))
 
 (defmethod realise((p right-bend))
@@ -619,8 +566,6 @@ curses::run
 ;;           x                  x             
 ;;
 ;; ------------------------------------------------------------------
-
-
 (defparameter junction-1 (make-junction 3 5))
 
 (defmethod realise((p junction))
@@ -678,34 +623,35 @@ curses::run
 
 
 ;; ------------------- ncurses gui code  -------------------------------------
-
 ;; iterate over board - see if any piece on board conflicts with piece
 ;; only like 4 checks to do
-(defun any-conflicts?(piece board)
+(defun any-conflicts-on-pieces-p(pieces board)
   (cond
-    ((null piece) nil)
-    (t (destructuring-bind (x y) (car piece)
+    ((null pieces) nil)
+    (t (destructuring-bind (x y) (car pieces)
 	 (let ((whos-on-first (aref board x y)))	     
 	   (cond
 	     ((and (integerp whos-on-first)
 		   (> whos-on-first 0))
 	      t)
-	     (t (any-conflicts? (cdr piece) board))))))))
+	     (t (any-conflicts-on-pieces-p (cdr pieces) board))))))))
 
 
+
+
+
+(defun any-conflicts?(piece board)
+  (any-conflicts-on-pieces-p (tetris::realise piece) board))
+
+  
 
 
 
 
 ;;; --------------------------- 712 -------------------------------
-
-
                 ;; _ _ _ _ _ _ _ _ _ _ _ _
-
                 ;;  T E T R I Z   v  1 . 0
-
                 ;; _ _ _ _ _ _ _ _ _ _ _ _
-
                 ;;
                 ;;(0,21)                           (11,21)
                 ;;  X  X  X  X  X  X  X  X  X  X  X  X 
@@ -731,7 +677,6 @@ curses::run
                 ;;  X  .  .  .  .  .  .  X  .  .  .  X 
                 ;;  X  X  X  X  X  X  X  X  X  X  X  X 
                 ;; (0,0)                            (11,0)
-
                 ;;  tetris board is 10 wide  x 20 high
                 ;; _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
 
@@ -743,11 +688,10 @@ curses::run
     ((funcall fn (car xs)) (cons (car xs) (filter fn (cdr xs))))
     (t (filter fn (cdr xs)))))
 
-
 ;; test cases ...
-
 (filter #'oddp '(1 2 3 4 5 6 7 8 9 10))
 ;;(1 3 5 7 9)
+
 (filter #'evenp '(1 2 3 4 5 6 7 8 9 10))
 ;;(2 4 6 8 10)
 
@@ -756,18 +700,12 @@ curses::run
 ;; x = 2 
 ;; x = 3 
 ;; NIL
-
 ;; investigate curried functions
 ;; higher order functions
 ;; re-usable code
 ;; lazy functions
-
-
 ;; smaller procedures / functions are easier to debug and reason about
 ;; compose small routines to solve larger problems
-
-
-
 ;; keep a tally on how many bits of pieces are on each row
 (defun tally-row(y board)
   (length (filter (lambda (sq)
@@ -777,7 +715,6 @@ curses::run
 
 
 ;; tests
-
 (tally-row 1 '((1 1)(2 1)(3 1)(4 1)(5 1)(6 1)(7 1)(8 1)(9 1)(10 1)))
 
 10
@@ -860,14 +797,11 @@ curses::run
       (setf (aref board x (- y 1))
 	    (aref board x y)))))
 
+
 ;; how could the program go wrong ?
 ;; out of spec ?
 ;; like piece wandering off past border of the tetris board (0,0) to (11,21) ?
-
 ;; 
-
-
-
 ;; list of squares '( (1 1)(4 2)(3 4).... )
 ;; 30 arbitrary number - as long as its bigger than height of the tetris table
 ;; when row gets completed , it gets eliminated , then everything above gets scrolled down
@@ -894,11 +828,6 @@ curses::run
 ;;   (do-while (< y 10)
 ;;     (format t "y = ~a ~%" y)
 ;;     (incf y)))
-
-
-
-
-
 ;; destructing bind
 (defun combine-piece-and-board(piece board)
   (let ((squares (realise piece)))
@@ -920,11 +849,9 @@ curses::run
 		 
 ;;(game)
 ;; ------------------------------------ bootstrap sbcl ffi ncurses code ----------------
-
 ;; get back into the curses packages and do the grunt of the "graphical" (in a 1960's tty terminal ?)
 ;; to access tetris routines write tetris 2 colons then function or variable after
 ;; tetris::
-
 ;; -------------------- back to CURSES ------------
 (in-package "CURSES")
 
@@ -944,7 +871,6 @@ curses::run
 ;; generate a new board -- probably a static board
 ;; if it got setq'd , wonder if calling new-board again would reveal the fact its a static board
 ;; or is it indeed a fresh board ?
-
 ;; make board like a U-shape
 ;; with an open top  11 by 22   (0,0) to (11,21) inclusive
 ;; borders at x=0 and x=11
@@ -956,10 +882,7 @@ curses::run
 ;;  x   x
 ;;  x x x
 ;;
-
-
 ;; common lisp has 2 dimension arrays
-
 (defun new-board()
   (let ((magic-width-tetris-board 12)
 	(magic-height-tetris-board 22))
@@ -972,8 +895,6 @@ curses::run
       (setf (aref board 11 y) 1))
       board)))
 
-
-    
 
 ;; initialise the screen for sbcl
 (defun initialise-ncurses()
@@ -1007,39 +928,38 @@ curses::run
   (- 30 y))
 
 
+;; message could be an integer
 ;; mvprintw takes Y coordinate first , followed by X coordinate
-(defun tetris-put-to-screen(x y str)
+(defun tetris-put-to-screen(x y message)
   (let ((screen-x (tetris-to-screen-x x))
 	(screen-y (tetris-to-screen-y y)))
-    (mvprintw screen-y screen-x str)))
+    (mvprintw screen-y screen-x (format nil "~a" message))))
 
 
 ;; show-board
 ;; board runs from 0,0 to 11,21 inclusive
 ;; 0's 11's are left and right of tetris board
 ;; 0's 21's are bottom and top of tetris board
-
 ;; board is an array
 ;; piece is a list
-
-
 (defun show-board(board)
   (loop for y from 0 to 21 do
     (loop for x from 0 to 11 do
       (tetris-put-to-screen x y (aref board x y)))))
 
-(defun show-piece(piece)
+(defun show-bits-of-the-pieces(pieces)
   (cond
-    ((null piece) t)
-    (t (let* ((xy (car piece))
+    ((null pieces) t)
+    (t (let* ((xy (car pieces))
 	      (x (car xy))
 	      (y (cadr xy)))
 	 (tetris-put-to-screen x y X)
-	 (show-piece (cdr piece))))))
+	 (show-bits-of-the-pieces (cdr pieces))))))
 
 (defun show-piece-and-board(piece board)
   (show-board board)
-  (show-piece piece))
+  (show-piece (tetris::realise piece)))
+
 
 
 ;; test knowledge of prog
@@ -1075,7 +995,6 @@ curses::run
        (refresh)
        (when (tetris::any-conflicts? piece board)
 	(throw 'game-over t))
-
       ;; check for key presses 
       (let ((ch (wgetch win)))
 	(cond
@@ -1113,7 +1032,6 @@ curses::run
 	       (progn ;; 
 		 (setq piece (tetris::rotate-left piece))
 		 (go top)))) ;; ----- key #\m -----
-
 	  (t (go top)))))))
 
 
@@ -1130,10 +1048,16 @@ curses::run
 ;; q & a
 
 
-;; to start the game , call the run procedure 
-;;> (run)
 
-(run)
+
+
+
+;; to start the game , call the run procedure 
+;;(run)
+
+
+
+
 
 
 
