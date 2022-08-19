@@ -623,32 +623,21 @@
 
 ;; ------------------- ncurses gui code  -------------------------------------
 
-
-;; (defun margin()
-;;   (format t "                "))
-
-
-;; iterate over board looking for x y
-(defun scan-board( x-y board)
-  (cond
-   ((null board) nil)
-   ((equalp x-y (car board)) x-y)
-   (t (scan-board x-y (cdr board)))))
-
-
-
-(defun display(msg)
-  (format t "~a" msg))
-
-
-
-
 ;; iterate over board - see if any piece on board conflicts with piece
+;; only like 4 checks to do
 (defun any-conflicts?(piece board)
   (cond
-   ((null board) nil)
-   ((conflict-p piece (first board)) (first board))
-   (t (any-conflicts? piece (cdr board)))))
+    ((null piece) nil)
+    (t (destructuring-bind (x y) (car piece)
+	 (let ((whos-on-first (aref board x y)))	     
+	   (cond
+	     ((and (integerp whos-on-first)
+		   (> whos-on-first 0))
+	      t)
+	     (t (any-conflicts? (cdr piece) board))))))))
+
+
+
 
 
 
@@ -769,19 +758,95 @@
       (t (tally-and-move (+ row 1) board)))))
   
 
+;; this causes a heap exhaustion - hmm .
+;;
+;; (loop for i from 1 to 10 do
+;;   (format t "i = ~A ~%" i)
+;;   (setq i (- i 1)))
+
+;; empty square is 
+(defvar *empty-tetris-square* " ")
+
+
+;; not checking x y are valid for board array
+;; x y may not even be numbers
+;; board may be corrupted
+;; .... can of worms ....
+(defun tetris-square-occupied-p(board x y)
+  (not (tetris-square-empty board x y)))
+
+(defun tetris-square-empty(board x y)
+  (equalp *empty-tetris-square* (aref board x y)))
+
+
+(defun tetris-full-row-p(board y)
+  (catch 'know
+  (loop for x from 1 to 10 do
+    (when (tetris-square-empty board x y)
+      (throw 'know nil)))
+  t))
+
+(defun tetris-eliminate-row(board y)
+  (loop for x from 1 to 10 do
+    (setf (aref board x y) *empty-tetris-square*)))
+
+;; can tetris piece be outside the (0,0) to (11,21) inclusive set of valid squares
+;; what if we want to have an arbitrary size tetris board
+;; multiple falling pieces ?
+;; all different colours
+;; all different minions gru
+;; themed tetris
+
+;; job done
+(defun tetris-scroll-board-down(board row)
+  (loop for y from (+ row 1) to 21 do
+    (loop for x from 1 to 10 do
+      (setf (aref board x (- y 1))
+	    (aref board x y)))))
+
+;; how could the program go wrong ?
+;; out of spec ?
+;; like piece wandering off past border of the tetris board (0,0) to (11,21) ?
+
 
 ;; list of squares '( (1 1)(4 2)(3 4).... )
 ;; 30 arbitrary number - as long as its bigger than height of the tetris table
 ;; when row gets completed , it gets eliminated , then everything above gets scrolled down
 ;;
+;; say four rows to be eliminated , ie placed long flat down a single slot 
+;; on any particular move , going to remove at most 4 layers . q.e.d.
+;; 
 (defun eliminate-completed-rows(board)
-  (let ((first-row 1))
-    (tally-and-move first-row board)))
+  (catch 'done
+    (let ((y 1))
+      (loop
+	(cond
+	  ((not (< y 22)) (throw 'done board))
+	  ((tetris-full-row-p board y)
+	   (tetris-eliminate-row board y)
+	   (tetris-scroll-board-down board y))
+	  (t (incf y)))))))
 
 
+
+;; no do while unless use loop macro
+;;
+;; (let ((y 1))
+;;   (do-while (< y 10)
+;;     (format t "y = ~a ~%" y)
+;;     (incf y)))
+
+
+
+
+
+;; destructing bind
 (defun combine-piece-and-board(piece board)
   (let ((squares (realise piece)))
-    (append squares board)))
+    (dolist (sq squares)
+      (destructuring-bind (x y) sq
+	(setf (aref board x y) 2)))))
+
 
 
 (defvar *tetris-piece-constructors*
@@ -837,13 +902,16 @@
 ;; common lisp has 2 dimension arrays
 
 (defun new-board()
-  (let ((board (make-array 12 22)))
+  (let ((magic-width-tetris-board 12)
+	(magic-height-tetris-board 22))
+    (let ((board (make-array (list magic-width-tetris-board
+				   magic-height-tetris-board))))
     (loop for x from 0 to 11 do
 	  (setf (aref board x 0) 1))
     (loop for y from 0 to 21 do
-      (setq (aref board 0 y) 1)
+      (setf (aref board 0 y) 1)
       (setf (aref board 11 y) 1))
-    board))
+      board)))
 
 
     
@@ -871,24 +939,46 @@
   (setq *ncurses-initialised* nil))
 
 
+(defun tetris-to-screen-x(x)
+  (+ (* x 2) 30))
+
+(defun tetris-to-screen-y(y)
+  (- 30 y))
+
+
+;; mvprintw takes Y coordinate first , followed by X coordinate
+(defun tetris-put-to-screen(x y str)
+  (let ((screen-x (tetris-to-screen-x x))
+	(screen-y (tetris-to-screen-y y)))
+    (mvprintw screen-y screen-x str)))
+
 
 ;; show-board
 ;; board runs from 0,0 to 11,21 inclusive
 ;; 0's 11's are left and right of tetris board
 ;; 0's 21's are bottom and top of tetris board
 
+;; board is an array
+;; piece is a list
+
+
 (defun show-board(board)
-  ;; blank out pieces 1,1 to 10,20 inclusive
-  (loop for y from 1 to 20 do
-	(loop for x from 1 to 10 do	      
-	      (mvprintw (- 30 y) (+ (* x 2) 30) " ")))
-  (dolist (sq board)
-    (let* ((x (first sq))
-	   (y (second sq))
-	   (screen-x (+ (* x 2) 30)) ;; space X's apart a bit more
-	   (screen-y (- 30 y)))  ;; may need to flip this
-      (mvprintw screen-y screen-x "X")
-      )))
+  (loop for y from 0 to 21 do
+    (loop for x from 0 to 11 do
+      (tetris-put-to-screen x y (aref board x y)))))
+
+(defun show-piece(piece)
+  (cond
+    ((null piece) t)
+    (t (let* ((xy (car piece))
+	      (x (car xy))
+	      (y (cadr xy)))
+	 (tetris-put-to-screen x y X)
+	 (show-piece (cdr piece))))))
+
+(defun show-piece-and-board(piece board)
+  (show-board board)
+  (show-piece piece))
 
 
 ;; test knowledge of prog
@@ -912,12 +1002,13 @@
 
 
 
+
 ;; Using goto if you can believe it
 (defun game-loop(board)
   (let ((piece (new-random-top-piece)))
     (prog ()
       top
-       (show-board (tetris::combine-piece-and-board piece board))
+       (show-piece-and-board piece board)
        (incf *tick*)
        (mvprintw 6 5 (format nil "*tick* ~a " *tick*))
        (refresh)

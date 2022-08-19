@@ -16,7 +16,6 @@
 
 
 
-
 ;;; Define the Lisp function interface to the C routine.  It returns a
 ;;; pointer to a record of type C-STRUCT.  It accepts four parameters:
 ;;; I, an int; S, a pointer to a string; R, a pointer to a C-STRUCT
