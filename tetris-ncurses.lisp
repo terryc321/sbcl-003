@@ -936,9 +936,11 @@
   (nodelay win t)
   (cbreak)  
   (mvprintw 5 5 "we are the champions !")
-  (loop for y from 0 to 30 do
-    (loop for x from 30 to 60 do
-      (mvprintw y x ".")))
+  
+  ;; (loop for y from 0 to 30 do
+  ;;   (loop for x from 30 to 60 do
+  ;;     (mvprintw y x ".")))
+  
   (refresh))
 
 
@@ -951,138 +953,94 @@
   (setq *ncurses-initialised* nil))
 
 
+
 ;; show-board
+;; board runs from 0,0 to 11,21 inclusive
+;; 0's 11's are left and right of tetris board
+;; 0's 21's are bottom and top of tetris board
+
+(defun show-board(board)
+  (dolist (sq board)
+    (let* ((x (first sq))
+	   (y (second sq))
+	   (screen-x (+ x 30))
+	   (screen-y (- 30 y)))  ;; may need to flip this
+      (mvprintw screen-y screen-x "X")
+      (refresh))))
+
+
+;; test knowledge of prog
+(defun experiment()
+  (prog ((i 0))
+    top
+       (setq i (+ i 1))
+       (format t "i = ~a ~%" i)
+       (when (< i 10)
+	 (go top))
+     (format t "we fell through , so i guess i is 10 : i = ~a~%" i)))
 
 
 
-     
 
 
-;; ;; accept - move piece down continuously until stops
-;; (defun game-ask(piece board)
-;;   (newline)
-;;   (show-board (combine-piece-and-board piece board))
-;;   (newline)
-;;   (display "Your move :> enter S A D N or M ")	      
-;;   (newline)  
-;;   (display "south!(s) : left(a) : right(d) : rot-right(n) : rot-left(m) : fix-in-place(f) : quit(q)> ")
-;;   (let ((response (read)))
-;;     (newline)
-;;     (display "response =[")
-;;     (display response)
-;;     (display "]")
 
-
-;; notion of the moving-piece
-
-;; return a new piece that thinks its at 5 20
-(defun new-random-top-piece()
-  (let ((x 5)
-	(y 20))
-    (funcall (one-of tetris::*tetris-piece-constructors*) x y)))
-
-
+;; Using goto if you can believe it
 (defun game-loop(board)
   (let ((piece (new-random-top-piece)))
+    (prog ()
+      top
+      (show-board (tetris::combine-piece-and-board piece board))
 
-    (loop
-     (prog
-	 top
-     (show-board (tetris::combine-piece-and-board piece board))
-     
-     (when (any-conflicts? piece board)
-       (throw 'game-over t))
+       (when (tetris::any-conflicts? piece board)
+	(throw 'game-over t))
 
-     (incf *tick*)
-     (mvprintw 6 5 (format nil "*tick* ~a " *tick*))
-     (refresh)
+      (incf *tick*)
+      (mvprintw 6 5 (format nil "*tick* ~a " *tick*))
+      (refresh)
 
-     ;; check for key presses 
-     (let ((ch (wgetch win)))
-       (cond
-	 ((= ch (char-code #\q))  (throw 'i-quit-this-horror t))
-	 ((= ch (char-code #\s)) ;; press-down -> if blocked -> fix piece + check full rows...
-	  (if (any-conflicts? (down piece) board)
-	      (progn
-		(setq board (combine-piece-and-board piece board))
-		(setq piece 
-	      (progn
-		(setq piece (down piece))
-		(goto top)
+      ;; check for key presses 
+      (let ((ch (wgetch win)))
+	(cond
+	  ((= ch (char-code #\q))  (throw 'i-quit-this-horror t)) ;; --- key #\q ------
+	  ((= ch (char-code #\s)) ;; press-down -> if blocked -> fix piece + check full rows...
+	   (if (tetris::any-conflicts? (tetris::down piece) board) ;; ------------- down !!
+	       (progn ;; conflicts down -- fix piece here -- eliminate completed rows and pull down stuff above
+		 (setq board (tetris::eliminate-completed-rows (tetris::combine-piece-and-board piece board)))
+		 (setq piece (new-random-top-piece))
+		 (go top))	      
+	       (progn ;; move piece down
+		 (setq piece (tetris::down piece))
+		 (go top)))) ;; --- key #\s ------
+	  ((= ch (char-code #\a)) ;; --- key #\a ----------------- left !!
+	   (if (tetris::any-conflicts? (tetris::left piece) board) 
+	       (go top) ;; cant go left -- jump to top of loop
+	       (progn ;; move piece left !
+		 (setq piece (tetris::left piece))
+		 (go top)))) ;; ----- key #\a -----
+	  ((= ch (char-code #\d)) ;; --- key #\d ------------------ right !!
+	   (if (tetris::any-conflicts? (tetris::right piece) board) 
+	       (go top) ;; cant go right -- jump to top of loop
+	       (progn ;; move piece left !
+		 (setq piece (tetris::right piece))
+		 (go top)))) ;; ----- key #\d -----
+	  ((= ch (char-code #\e)) ;; --- key #\e ----------------- rotate right !!
+	   (if (tetris::any-conflicts? (tetris::rotate-right piece) board) 
+	       (go top) ;; cant go rotate-right -- jump to top of loop
+	       (progn ;; 
+		 (setq piece (tetris::rotate-right piece))
+		 (go top)))) ;; ----- key #\n -----
+	  ((= ch (char-code #\w)) ;; --- key #\w ------------------- rotate left !
+	   (if (tetris::any-conflicts? (tetris::rotate-left piece) board) 
+	       (go top) ;; cant go rotate-left -- jump to top of loop
+	       (progn ;; 
+		 (setq piece (tetris::rotate-left piece))
+		 (go top)))) ;; ----- key #\m -----
 
-	  
-	 )
-	 ((= ch (char-code #\a))
-	  (incf msg)
-	  (mvprintw msg 0 "key a pressed !\n"))
-	 (t nil)))
-;;----------------------------------------------------
-    (cond
-     ((or (equalp response 's))
-      ;;(display "understood as s for south move")
-      (if (any-conflicts? (down piece) board)
-	  (progn
-	    ;;(newline)(display "cannot go SOUTH - conflicts detected")
-	    (game-ask piece board))
-	  (game-ask (down piece) board)))
-     
-     ((or (equalp response 'a))
-      (display "understood as a for LEFT")
-      (if (any-conflicts? (left piece) board)
-	  (progn
-	    (newline)(display "cannot go LEFT any more - conflicts detected")
-	    (game-ask piece board))
-	  (game-ask (left piece) board)))     
-      
-     ((or (equalp response 'd))
-      (display "understood as d for RIGHT")
-      (if (any-conflicts? (right piece) board)
-	  (progn
-	    (newline)(display "cannot go RIGHT any more - conflicts detected")
-	    (game-ask piece board))
-	  (game-ask (right piece) board)))
-     
-     ((or (equalp response 'n))
-      (display "understood as n for ROTATE rIGHT")
-      (if (any-conflicts? (rotate-right piece) board)
-	  (progn
-	    (newline)(display "cannot rotate RIGHT  - conflicts detected")
-	    (game-ask piece board))
-	  (game-ask (rotate-right piece) board)))
-           
-     ((or (equalp response 'm))
-      (display "understood as m for ROTATE LEFT")      
-      (if (any-conflicts? (rotate-left piece) board)
-	  (progn
-	    (newline)(display "cannot rotate LEFT - conflicts detected")	    
-	    (game-ask piece board))
-	  (game-ask (rotate-left piece) board)))
-
-     ((or (equalp response 'f))
-      (display "understood as f for COMPLETED MOVE")      
-      (if (any-conflicts? (down piece) board)
-	  (progn
-	    (newline)(display "we are done with this piece !")
-	    (game-loop (eliminate-completed-rows (combine-piece-and-board piece board))))
-	  (game-ask (rotate-left piece) board)))
-     
-
-     ((or (equalp response 'q))
-      (display "understood as q for QUIT")
-      (error "quit from game - q - "))     
-                 
-     (t (newline)
-	   (display "...not understood ...")
-	   (display response)
-	   (newline)
-	   (game-ask piece board)))))
+	  (t (go top)))))))
 
 
-     
-     ) ;; loop forever
-    )
-  )
-    
+
+
 
 
 (defun run()
