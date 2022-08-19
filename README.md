@@ -18,4 +18,13 @@ gcc -o test.o test.c
 ld -shared -fPIC -lncurses -o test.so  test.o
 
 
+why did u
+burn my 
+bac-on !!!!!
+
+how does markdown work ?
+
+
+
+
 

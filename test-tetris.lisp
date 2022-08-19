@@ -68,6 +68,12 @@
   (+ a b))
 
 
+(defun dummy-strcat (a b)
+  (concatenate 'string a b))
+
+
+
+
 
 (test dummy-add
       (for-all ((a (gen-integer))
@@ -96,8 +102,63 @@
 	       (is (plusp result))
 	       (is (= result 0))))
 
+
+
+(gen-float)
+;;#<CLOSURE (LAMBDA () :IN GEN-FLOAT) {1005A906AB}>
+
+(funcall (gen-float))
+;;9.220082e37
+
+(funcall (gen-integer :max 27 :min -16))
+;;26
+
+;; or again, gen-string, gen-list, gen-tree, gen-buffer, gen-character.
+;; And we have a function to run 100 checks, taking each turn a new value from the given generators: for-all:
+
+(test randomtest
+  (for-all ((a (gen-integer :min 1 :max 10))
+            (b (gen-integer :min 1 :max 10)))
+    "Test random tests."
+    (is (<= a b))))
+
+
 (run! 'example-suite)
 
+;; ------------------------ START of TeTris TesTs Sweet ----------------
+
+;; test-suite
+(def-suite tetris-suite-1 :description "tetris-suite-1.")
+(in-suite tetris-suite-1)
+
+
+;; make it equalp so greatest chance of winning out
+(defun one-of(xs)
+  (let* ((rnd (random (length xs)))
+	 (pick (nth rnd xs)))
+    (if (not (member pick xs :test #'equalp))
+	(error "one-of picked something not in list given")
+	pick)))
+
+
+(test one-of-1
+      "Test the ONE-OF function" ;; a short description
+      ;; the checks
+      (is (eq 'a (one-of '(a))))
+      (is (not (eq 'c (one-of '(a b))))))
+
+
+;;      (nth (random len) xs))))
+
+;; (nth 0 '())
+
+;; one-of xs
+;; if xs is nil , length len is 0 ,
+;; (random 0) error
+;; ;;
+
+
+(run! 'tetris-suite-1)
 
 
 

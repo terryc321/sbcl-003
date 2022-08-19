@@ -24,6 +24,8 @@
   (b boolean))
 
 
+(define-alien-routine clrtoeol  int)
+
 (define-alien-routine cbreak  int)
 
 (define-alien-routine wgetch  int
@@ -52,7 +54,6 @@
 
 
 
-
 ;; go through tetris.scm originally written in guile to convert to common
 
 
@@ -62,6 +63,8 @@
 
 ;; lets use it then
 (in-package "TETRIS")
+
+;; ------------------------ TETRIS PACKAGE  ------------------
 
 
 
@@ -105,6 +108,7 @@
 (defun one-of(xs)
   (let ((len (length xs)))
     (nth (random len) xs)))
+
 
 ;; sanity check 10000 values present
 ;; array of 6 items 0th index to 5th index , 6th index out of bounds - be array of 7 items not 6
@@ -151,6 +155,7 @@
     :initarg :state
     :accessor state)))
 
+
 ;;#<STANDARD-CLASS TETRIS::PIECE>
 
 ;; flat inherits from piece 
@@ -182,7 +187,58 @@
 ;;
 ;;---------------------------------------------------------------------
 
+
+
+(dribble (format nil "/home/terry/projects/ffi/sbcl-002/logs/~a.tetris.log" (get-universal-time)))
+
+(trace
+;; ----- tetris routines ----
+tetris::assoc-value
+tetris::one-of
+tetris::make-flat 
+tetris::make-box 
+tetris::make-elbow 
+tetris::make-left-bend 
+tetris::make-right-bend 
+tetris::make-junction 
+tetris::any-squares-list-are-x-y
+tetris::any-conflicts?
+tetris::filter
+tetris::tally-row
+tetris::move-all-items-down-if-above-row
+tetris::tally-and-move
+tetris::tetris-square-occupied-p
+tetris::tetris-square-empty
+tetris::tetris-full-row-p
+tetris::tetris-eliminate-row
+tetris::tetris-scroll-board-down
+tetris::eliminate-completed-rows
+tetris::combine-piece-and-board
+
+;; ---- curses routines -----
+curses::new-board
+curses::initialise-ncurses
+curses::cleanup-ncurses
+curses::tetris-to-screen-x
+curses::tetris-to-screen-y
+curses::tetris-put-to-screen
+curses::show-board
+curses::show-piece
+curses::show-piece-and-board
+curses::experiment
+curses::new-random-top-piece
+curses::game-loop
+curses::run
+)
+
+
+
+
+
+;; assert x y must be in range on the tetris board between (0,0) and (11,21)
+
 (defun make-flat (x y)
+  (assert
   (make-instance 'flat       :x x
 			     :y y
 			     :state 1))
@@ -808,6 +864,9 @@
 ;; out of spec ?
 ;; like piece wandering off past border of the tetris board (0,0) to (11,21) ?
 
+;; 
+
+
 
 ;; list of squares '( (1 1)(4 2)(3 4).... )
 ;; 30 arbitrary number - as long as its bigger than height of the tetris table
@@ -935,8 +994,10 @@
 ;; fix me bug - trashes terminal after game ends
 ;;
 (defun cleanup-ncurses()
+  (clrtoeol)
   (endwin)
   (setq *ncurses-initialised* nil))
+
 
 
 (defun tetris-to-screen-x(x)
@@ -1072,7 +1133,7 @@
 ;; to start the game , call the run procedure 
 ;;> (run)
 
-;;(run)
+(run)
 
 
 
