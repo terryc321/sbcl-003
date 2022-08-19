@@ -2,47 +2,8 @@
 ;; reasoning
 ;; used setf -- should we eliminate this from code
 ;;
-;; provably correct implementation ?
+;; provably correct implementation
 ;;
-
-(defpackage "CURSES"
-  (:use "CL" "CL-USER" "SB-ALIEN"))
-
-(in-package "CURSES")
-
-
-(load-shared-object "/usr/lib/x86_64-linux-gnu/libncurses.so.6.2")
-
-;; try see if we can use refresh from ncurses
-(define-alien-routine clear  int)
-
-(define-alien-routine raw  int)
-
-(define-alien-routine noecho  int)
-
-(define-alien-routine nodelay int
-  (w (* int))
-  (b boolean))
-
-
-(define-alien-routine cbreak  int)
-
-(define-alien-routine wgetch  int
-  (w (* int)))
-
-(define-alien-routine refresh  int)
-
-(define-alien-routine initscr  (* int))
-
-(define-alien-routine endwin  int)
-
-(define-alien-routine mvprintw
-  int
-  (y int)
-  (x int)
-  (str c-string))
-
-
 
 
 ;; reasoning about objects with mutation becomes impossible
@@ -328,6 +289,41 @@
 ;; --------------------------------------
 
 
+(defparameter p1 (make-flat 2 3))
+
+(defparameter p2 (make-flat 0 0))
+
+(defparameter p3 (make-flat 4 5))
+
+;;(defun flat?(p) (eq 'flat (shape p)))
+
+;; tests ....
+(x p1)
+
+(y p1)
+
+;;(shape p1)
+
+(state p1)
+
+
+
+
+(realise p1)
+;;((0 3) (1 3) (2 3) (3 3))
+
+;; expect all squares above cause a conflict , except square (5 5) which is not in conflict
+(mapcar (lambda (xy) (conflict-p p1 xy)) '((0 3)(1 3)(2 3)(3 3)(5 5)))
+;;((0 3) (1 3) (2 3) (3 3) NIL)
+
+;; ideally want a generic copy
+
+
+
+
+
+
+
 ;; ---------------------------------------
 
 (defmethod realise((p flat))
@@ -362,38 +358,6 @@
   (rotate-right p))
 
 ;; -------------------------------------------------------
-(defparameter p1 (make-flat 2 3))
-
-(defparameter p2 (make-flat 0 0))
-
-(defparameter p3 (make-flat 4 5))
-
-;;(defun flat?(p) (eq 'flat (shape p)))
-
-;; tests ....
-(x p1)
-
-(y p1)
-
-;;(shape p1)
-
-(state p1)
-
-
-
-
-(realise p1)
-;;((0 3) (1 3) (2 3) (3 3))
-
-;; expect all squares above cause a conflict , except square (5 5) which is not in conflict
-(mapcar (lambda (xy) (conflict-p p1 xy)) '((0 3)(1 3)(2 3)(3 3)(5 5)))
-;;((0 3) (1 3) (2 3) (3 3) NIL)
-
-;; ideally want a generic copy
-
-
-
-;; ------------------------------------------------------
 
 (defparameter b1 (make-box 3 5))
 
@@ -648,11 +612,11 @@
 
 
 
-;; ------------------- ncurses gui code  -------------------------------------
+;; -------------------  -------------------------------------
 
 
-;; (defun margin()
-;;   (format t "                "))
+(defun margin()
+  (format t "                "))
 
 
 ;; iterate over board looking for x y
@@ -663,23 +627,23 @@
    (t (scan-board x-y (cdr board)))))
 
 
-;; (defun newline()
-;;   (format t "~%"))
+(defun newline()
+  (format t "~%"))
 
 
 
-;; ;; if square is occupied then put a # otherwise a dot .
-;; (defun show-board-squares( x y board)
-;;   (cond
-;;    ((> x 11) (newline)(margin)(show-board-squares 0 (- y 1) board))
-;;    ((< y 0) (newline))
-;;    (t    
-;;     (cond
-;;      ((scan-board (list x y) board)
-;;       (format t " X "))
-;;      (t
-;;       (format t " . ")))
-;;     (show-board-squares (+ x 1) y board))))
+;; if square is occupied then put a # otherwise a dot .
+(defun show-board-squares( x y board)
+  (cond
+   ((> x 11) (newline)(margin)(show-board-squares 0 (- y 1) board))
+   ((< y 0) (newline))
+   (t    
+    (cond
+     ((scan-board (list x y) board)
+      (format t " X "))
+     (t
+      (format t " . ")))
+    (show-board-squares (+ x 1) y board))))
 
 
 (defun display(msg)
@@ -688,52 +652,53 @@
 
 
 
-;; (defun show-board(board)
-;;   (newline)
-;;   (newline)
-;;   (newline)
-;;   (newline)
-;;   (newline)
-;;   (newline)
-;;   (newline)
-;;   (newline)
-;;   (newline)
-;;   (newline)
-;;   (newline)
-;;   (newline)
-;;   (newline)
-;;   (newline)
-;;   (newline)
-;;   (newline)
-;;   (margin)(display " T E T R I Z   v  1 . 0") (newline)
-;;   (newline)
-;;   (newline)
-;;   (margin)
-;;   (display "_ _ _ _ _ _ _ _ _ _ _ _")
-;;   (newline)
-;;   (newline)
-;;   (margin)
-;;   (show-board-squares 0 21 board)
-;;   (newline)
-;;   (margin)
-;;   (display "_ _ _ _ _ _ _ _ _ _ _ _")
-;;   (newline)
-;;   (newline)
-;;   (newline)
-;;   (newline)
-;;   (newline)
-;;   (newline)
-;;   (newline)
-;;   (newline)
-;;   (newline)
-;;   (newline)
-;;   (newline)
-;;   (newline)
-;;   (newline)
-;;   (newline)
-;;   (newline)
-;;   (newline)
-;; )
+(defun show-board(board)
+  (newline)
+  (newline)
+  (newline)
+  (newline)
+  (newline)
+  (newline)
+  (newline)
+  (newline)
+  (newline)
+  (newline)
+  (newline)
+  (newline)
+  (newline)
+  (newline)
+  (newline)
+  (newline)
+  (margin)(display " T E T R I Z   v  1 . 0") (newline)
+  (newline)
+  (newline)
+  (margin)
+  (display "_ _ _ _ _ _ _ _ _ _ _ _")
+  (newline)
+  (newline)
+  (margin)
+  (show-board-squares 0 21 board)
+  (newline)
+  (margin)
+  (display "_ _ _ _ _ _ _ _ _ _ _ _")
+  (newline)
+  (newline)
+  (newline)
+  (newline)
+  (newline)
+  (newline)
+  (newline)
+  (newline)
+  (newline)
+  (newline)
+  (newline)
+  (newline)
+  (newline)
+  (newline)
+  (newline)
+  (newline)
+)
+
 
 
 
@@ -879,6 +844,84 @@
     (append squares board)))
 
 
+
+
+
+;; accept - move piece down continuously until stops
+(defun game-ask(piece board)
+  (newline)
+  (show-board (combine-piece-and-board piece board))
+  (newline)
+  (display "Your move :> enter S A D N or M ")	      
+  (newline)  
+  (display "south!(s) : left(a) : right(d) : rot-right(n) : rot-left(m) : fix-in-place(f) : quit(q)> ")
+  (let ((response (read)))
+    (newline)
+    (display "response =[")
+    (display response)
+    (display "]")
+    (cond
+     ((or (equalp response 's))
+      (display "understood as s for south move")
+      (if (any-conflicts? (down piece) board)
+	  (progn
+	    (newline)(display "cannot go SOUTH - conflicts detected")
+	    (game-ask piece board))
+	  (game-ask (down piece) board)))
+     
+     ((or (equalp response 'a))
+      (display "understood as a for LEFT")
+      (if (any-conflicts? (left piece) board)
+	  (progn
+	    (newline)(display "cannot go LEFT any more - conflicts detected")
+	    (game-ask piece board))
+	  (game-ask (left piece) board)))     
+      
+     ((or (equalp response 'd))
+      (display "understood as d for RIGHT")
+      (if (any-conflicts? (right piece) board)
+	  (progn
+	    (newline)(display "cannot go RIGHT any more - conflicts detected")
+	    (game-ask piece board))
+	  (game-ask (right piece) board)))
+     
+     ((or (equalp response 'n))
+      (display "understood as n for ROTATE rIGHT")
+      (if (any-conflicts? (rotate-right piece) board)
+	  (progn
+	    (newline)(display "cannot rotate RIGHT  - conflicts detected")
+	    (game-ask piece board))
+	  (game-ask (rotate-right piece) board)))
+           
+     ((or (equalp response 'm))
+      (display "understood as m for ROTATE LEFT")      
+      (if (any-conflicts? (rotate-left piece) board)
+	  (progn
+	    (newline)(display "cannot rotate LEFT - conflicts detected")	    
+	    (game-ask piece board))
+	  (game-ask (rotate-left piece) board)))
+
+     ((or (equalp response 'f))
+      (display "understood as f for COMPLETED MOVE")      
+      (if (any-conflicts? (down piece) board)
+	  (progn
+	    (newline)(display "we are done with this piece !")
+	    (game-loop (eliminate-completed-rows (combine-piece-and-board piece board))))
+	  (game-ask (rotate-left piece) board)))
+     
+
+     ((or (equalp response 'q))
+      (display "understood as q for QUIT")
+      (error "quit from game - q - "))     
+                 
+     (t (newline)
+	   (display "...not understood ...")
+	   (display response)
+	   (newline)
+	   (game-ask piece board)))))
+
+
+
 (defvar *tetris-piece-constructors*
   (list #'make-flat
 	#'make-box
@@ -888,195 +931,29 @@
 	#'make-junction))
 
 
-		 
-;;(game)
-;; ------------------------------------ bootstrap sbcl ffi ncurses code ----------------
+     
+(defun game-loop(board)
+  (let ((piece (funcall (one-of *tetris-piece-constructors*)
+			   5 20)))
+    (cond
+     ((any-conflicts? piece board)
+      (newline)
+      (newline)
+      (display "G a m e ... O v e r"))
+     (t
+      (game-ask piece board)))))
 
-;; get back into the curses packages and do the grunt of the "graphical" (in a 1960's tty terminal ?)
-;; to access tetris routines write tetris 2 colons then function or variable after
-;; tetris::
 
-;; -------------------- back to CURSES ------------
-(in-package "CURSES")
-
-(format t "we survived to here anyhow ...~%")
-
-;; some notion of a clock
-(defvar *tick* 0)
-
-;; 
-(defvar *ncurses-initialised* nil)
-
-;; win is ncurses WINDOW * pointer
-(defparameter win nil)
-
-(defparameter msg 7)
-
-;; generate a new board -- probably a static board
-;; if it got setq'd , wonder if calling new-board again would reveal the fact its a static board
-;; or is it indeed a fresh board ?
-(defun new-board()
+(defun game()
   (let ((board '((0 0)(1 0) (2 0)(3 0)(4 0) (5 0)(6 0)(7 0)(8 0)(9 0)(10 0)(11 0)
 		 (0 1)(0 2) (0 3)(0 4)(0 5) (0 6)(0 7)(0 8)(0 9)(0 10)(0 11)(0 12)(0 13)(0 14)(0 15)(0 16)(0 17)(0 18)(0 19)(0 20)(0 21)
 		 (11 1)(11 2) (11 3)(11 4)(11 5) (11 6)(11 7)(11 8)(11 9)(11 10)(11 11)(11 12)(11 13)(11 14)(11 15)(11 16)(11 17)(11 18)(11 19)(11 20)(11 21)
 		 (0 21)(1 21) (2 21)(3 21)(4 21) (5 21)(6 21)(7 21)(8 21)(9 21)(10 21)(11 21))))
-    board))
+    (game-loop board)))
 
 
-
-;; initialise the screen for sbcl
-(defun initialise-ncurses()
-  (setq win (initscr))
-  (clear)
-  (raw)
-  (noecho)
-  (nodelay win t)
-  (cbreak)  
-  (mvprintw 5 5 "we are the champions !"))
-
- 
-
-
-
-;; clean up ncurses -- may need to clr end of line , so it does not trash the terminal on exit
-;;
-;; fix me bug - trashes terminal after game ends
-;;
-(defun cleanup-ncurses()
-  (endwin)
-  (setq *ncurses-initialised* nil))
-
-
-
-;; show-board
-;; board runs from 0,0 to 11,21 inclusive
-;; 0's 11's are left and right of tetris board
-;; 0's 21's are bottom and top of tetris board
-
-(defun show-board(board)
-  ;; blank out pieces 1,1 to 10,20 inclusive
-  (loop for y from 1 to 20 do
-	(loop for x from 1 to 10 do	      
-	      (mvprintw (- 30 y) (+ (* x 2) 30) " ")))
-  (dolist (sq board)
-    (let* ((x (first sq))
-	   (y (second sq))
-	   (screen-x (+ (* x 2) 30)) ;; space X's apart a bit more
-	   (screen-y (- 30 y)))  ;; may need to flip this
-      (mvprintw screen-y screen-x "X")
-      )))
-
-
-;; test knowledge of prog
-(defun experiment()
-  (prog ((i 0))
-    top
-       (setq i (+ i 1))
-       (format t "i = ~a ~%" i)
-       (when (< i 10)
-	 (go top))
-     (format t "we fell through , so i guess i is 10 : i = ~a~%" i)))
-
-
-
-;; ----------- new-random-top-piece ------------------
-(defun new-random-top-piece()
-  (let ((x 5)
-	(y 20)
-	(n (random 6)))
-    (funcall (nth n tetris::*tetris-piece-constructors*) x y)))
-
-
-
-
-
-
-
-
-
-
-;; Using goto if you can believe it
-(defun game-loop(board)
-  (let ((piece (new-random-top-piece)))
-    (prog ()
-      top
-       (show-board (tetris::combine-piece-and-board piece board))
-       (incf *tick*)
-       (mvprintw 6 5 (format nil "*tick* ~a " *tick*))
-       (refresh)
-       (when (tetris::any-conflicts? piece board)
-	(throw 'game-over t))
-
-      ;; check for key presses 
-      (let ((ch (wgetch win)))
-	(cond
-	  ((= ch (char-code #\q))  (throw 'i-quit-this-horror t)) ;; --- key #\q ------
-	  ((= ch (char-code #\s)) ;; press-down -> if blocked -> fix piece + check full rows...
-	   (if (tetris::any-conflicts? (tetris::down piece) board) ;; ------------- down !!
-	       (progn ;; conflicts down -- fix piece here -- eliminate completed rows and pull down stuff above
-		 (setq board (tetris::eliminate-completed-rows (tetris::combine-piece-and-board piece board)))
-		 (setq piece (new-random-top-piece))
-		 (go top))	      
-	       (progn ;; move piece down
-		 (setq piece (tetris::down piece))
-		 (go top)))) ;; --- key #\s ------
-	  ((= ch (char-code #\a)) ;; --- key #\a ----------------- left !!
-	   (if (tetris::any-conflicts? (tetris::left piece) board) 
-	       (go top) ;; cant go left -- jump to top of loop
-	       (progn ;; move piece left !
-		 (setq piece (tetris::left piece))
-		 (go top)))) ;; ----- key #\a -----
-	  ((= ch (char-code #\d)) ;; --- key #\d ------------------ right !!
-	   (if (tetris::any-conflicts? (tetris::right piece) board) 
-	       (go top) ;; cant go right -- jump to top of loop
-	       (progn ;; move piece left !
-		 (setq piece (tetris::right piece))
-		 (go top)))) ;; ----- key #\d -----
-	  ((= ch (char-code #\e)) ;; --- key #\e ----------------- rotate right !!
-	   (if (tetris::any-conflicts? (tetris::rotate-right piece) board) 
-	       (go top) ;; cant go rotate-right -- jump to top of loop
-	       (progn ;; 
-		 (setq piece (tetris::rotate-right piece))
-		 (go top)))) ;; ----- key #\n -----
-	  ((= ch (char-code #\w)) ;; --- key #\w ------------------- rotate left !
-	   (if (tetris::any-conflicts? (tetris::rotate-left piece) board) 
-	       (go top) ;; cant go rotate-left -- jump to top of loop
-	       (progn ;; 
-		 (setq piece (tetris::rotate-left piece))
-		 (go top)))) ;; ----- key #\m -----
-
-	  (t (go top)))))))
-
-
-
-
-
-
-(defun run()
-  (unwind-protect
-       (progn (initialise-ncurses)
-	      (game-loop (new-board)))
-    (cleanup-ncurses)))
-
-;; q & a
-
-
-;; to start the game , call the run procedure 
-;;> (run)
-
-(run)
-
-
-
-
-
-
-
-
-
-
-
-
+		 
+;;(game)
 
 
 
