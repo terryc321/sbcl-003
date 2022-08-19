@@ -846,6 +846,7 @@
 
 
 
+
 ;; accept - move piece down continuously until stops
 (defun game-ask(piece board)
   (newline)
