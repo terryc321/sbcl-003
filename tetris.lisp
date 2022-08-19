@@ -583,7 +583,7 @@
 		`(,(+ x 0) ,(- y 0))
 		`(,(+ x 1) ,(- y 0))
 		`(,(+ x 0) ,(- y 1))))
-     (else (error "realise-junction")))))
+     (t (error "realise-junction")))))
 
 
 (defmethod rotate-right((p junction))
@@ -595,7 +595,7 @@
 	   ((= n 2) 3)
 	   ((= n 3) 4)
 	   ((= n 4) 1)
-	   (else (error "junctions only states are 1 and 2 and 3 and 4"))))
+	   (t (error "junctions only states are 1 and 2 and 3 and 4"))))
     c))
 
 (defmethod rotate-left((p junction))
@@ -607,7 +607,7 @@
 	    ((= n 2) 1)
 	    ((= n 3) 2)
 	    ((= n 4) 3)
-	    (else (error "junctions only states are 1 and 2 and 3 and 4"))))
+	    (t (error "junctions only states are 1 and 2 and 3 and 4"))))
     c))
 
 
@@ -751,19 +751,92 @@
                 ;; _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
 
 
-;;
+
+(defun filter(fn xs)
+  (cond
+    ((null xs) xs)
+    ((funcall fn (car xs)) (cons (car xs) (filter fn (cdr xs))))
+    (t (filter fn (cdr xs)))))
+
+
+;; test cases ...
+
+(filter #'oddp '(1 2 3 4 5 6 7 8 9 10))
+;;(1 3 5 7 9)
+(filter #'evenp '(1 2 3 4 5 6 7 8 9 10))
+;;(2 4 6 8 10)
+
+(dolist (x '(1 2 3 )) (format t "x = ~a ~%" x))
+;; x = 1 
+;; x = 2 
+;; x = 3 
+;; NIL
+
+;; investigate curried functions
+;; higher order functions
+;; re-usable code
+;; lazy functions
+
+
+;; smaller procedures / functions are easier to debug and reason about
+;; compose small routines to solve larger problems
+
+
+
+;; keep a tally on how many bits of pieces are on each row
+(defun tally-row(y board)
+  (length (filter (lambda (sq)
+		    (let ((sy (second sq)))
+		      (= sy y)))
+		  board)))
+
+
+;; tests
+
+(tally-row 1 '((1 1)(2 1)(3 1)(4 1)(5 1)(6 1)(7 1)(8 1)(9 1)(10 1)))
+
+10
+
+(tally-row 1 '((1 1)(2 1)(3 1)(4 1)(5 1)(6 1)(7 1)(8 1)(9 1)))
+
+9
+
+
+(defun move-all-items-down-if-above-row(row board)
+  (mapcar (lambda (sq)
+	    (let ((y (second sq)))
+	      (cond
+		((> y row) (let ((x (first sq)))
+			     (list x (- y 1))))
+		(t sq))))
+	  board))
+
+(move-all-items-down-if-above-row 1 '((1 5)(1 1)(2 1)(3 1)(4 1)(5 1)(6 1)(7 1)(8 1)(9 1)))
+;;((1 4) (1 1) (2 1) (3 1) (4 1) (5 1) (6 1) (7 1) (8 1) (9 1))
+
+(move-all-items-down-if-above-row 0 '((1 1)(2 1)(3 1)(4 1)(5 1)(6 1)(7 1)(8 1)(9 1)))
+;;((1 0) (2 0) (3 0) (4 0) (5 0) (6 0) (7 0) (8 0) (9 0))
+
+
+;; tally a row , if it is full , eliminate it and move all pieces down by 1
+(defun tally-and-move(row board)
+  (let ((full-row 10))
+    (cond
+      ((>= row 21) board)
+      ((= (tally-row row board) full-row)
+       (tally-and-move (+ row 1)
+		       (move-all-items-down-if-above-row row board)))
+      (t (tally-and-move (+ row 1) board)))))
+  
+
+
 ;; list of squares '( (1 1)(4 2)(3 4).... )
 ;; 30 arbitrary number - as long as its bigger than height of the tetris table
+;; when row gets completed , it gets eliminated , then everything above gets scrolled down
 ;;
-(defun eliminate-complete-rows(board)
-  (let ((arr (make-array 30)))
-    (loop (dolist xy board t)
-	  (let ((x (first xy))
-		(y (second xy)))
-	    (if (and (>= x 0) (< x 10
-	    (incf (aref arr y))))
-    ;; for any entry in arr that equals 10 
-  )
+(defun eliminate-completed-rows(board)
+  (let ((first-row 1))
+    (tally-and-move first-row board)))
 
 
 (defun combine-piece-and-board(piece board)
@@ -876,9 +949,10 @@
 		 (11 1)(11 2) (11 3)(11 4)(11 5) (11 6)(11 7)(11 8)(11 9)(11 10)(11 11)(11 12)(11 13)(11 14)(11 15)(11 16)(11 17)(11 18)(11 19)(11 20)(11 21)
 		 (0 21)(1 21) (2 21)(3 21)(4 21) (5 21)(6 21)(7 21)(8 21)(9 21)(10 21)(11 21))))
     (game-loop board)))
+
+
 		 
-		 
-(game)
+;;(game)
 
 
 
