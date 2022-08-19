@@ -328,41 +328,6 @@
 ;; --------------------------------------
 
 
-(defparameter p1 (make-flat 2 3))
-
-(defparameter p2 (make-flat 0 0))
-
-(defparameter p3 (make-flat 4 5))
-
-;;(defun flat?(p) (eq 'flat (shape p)))
-
-;; tests ....
-(x p1)
-
-(y p1)
-
-;;(shape p1)
-
-(state p1)
-
-
-
-
-(realise p1)
-;;((0 3) (1 3) (2 3) (3 3))
-
-;; expect all squares above cause a conflict , except square (5 5) which is not in conflict
-(mapcar (lambda (xy) (conflict-p p1 xy)) '((0 3)(1 3)(2 3)(3 3)(5 5)))
-;;((0 3) (1 3) (2 3) (3 3) NIL)
-
-;; ideally want a generic copy
-
-
-
-
-
-
-
 ;; ---------------------------------------
 
 (defmethod realise((p flat))
@@ -397,6 +362,38 @@
   (rotate-right p))
 
 ;; -------------------------------------------------------
+(defparameter p1 (make-flat 2 3))
+
+(defparameter p2 (make-flat 0 0))
+
+(defparameter p3 (make-flat 4 5))
+
+;;(defun flat?(p) (eq 'flat (shape p)))
+
+;; tests ....
+(x p1)
+
+(y p1)
+
+;;(shape p1)
+
+(state p1)
+
+
+
+
+(realise p1)
+;;((0 3) (1 3) (2 3) (3 3))
+
+;; expect all squares above cause a conflict , except square (5 5) which is not in conflict
+(mapcar (lambda (xy) (conflict-p p1 xy)) '((0 3)(1 3)(2 3)(3 3)(5 5)))
+;;((0 3) (1 3) (2 3) (3 3) NIL)
+
+;; ideally want a generic copy
+
+
+
+;; ------------------------------------------------------
 
 (defparameter b1 (make-box 3 5))
 
@@ -978,6 +975,14 @@
        (when (< i 10)
 	 (go top))
      (format t "we fell through , so i guess i is 10 : i = ~a~%" i)))
+
+
+
+;; ----------- new-random-top-piece ------------------
+(defun new-random-top-piece()
+  (let ((x 5)
+	(y 20))
+    (funcall (tetris::one-of tetris::*tetris-piece-constructors*) x y)))
 
 
 
