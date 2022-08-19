@@ -982,8 +982,11 @@
 ;; ----------- new-random-top-piece ------------------
 (defun new-random-top-piece()
   (let ((x 5)
-	(y 20))
-    (funcall (tetris::one-of tetris::*tetris-piece-constructors*) x y)))
+	(y 20)
+	(n (random 6)))
+    (funcall (nth n tetris::*tetris-piece-constructors*) x y)))
+
+
 
 
 
@@ -1003,7 +1006,6 @@
        (refresh)
        (when (tetris::any-conflicts? piece board)
 	(throw 'game-over t))
-
 
       ;; check for key presses 
       (let ((ch (wgetch win)))
@@ -1063,6 +1065,7 @@
 ;;> (run)
 
 (run)
+
 
 
 
