@@ -1,5 +1,48 @@
 
 
+
+;; ---------------------- off by bug -------------------------------------------
+CL-USER> tetris::tb
+#(#(1 1 -2 0 -1 0 0 0 1 0) #(0 0 0 0 0 -1 0 -2 0 -3) #(2 2 -1 0 0 0 -1 -1 0 -1)
+  #(6 4 -1 0 -1 -1 -1 -2 0 -2) #(3 5 -1 -1 -1 0 0 0 1 0)
+  #(4 6 -1 0 0 0 0 -1 0 -2) #(5 3 1 0 1 -1 0 -1 -1 -1)
+  #(10 8 1 0 1 -1 1 -2 0 -2) #(7 9 -1 0 -1 -1 0 -1 1 -1)
+  #(8 10 0 0 1 0 0 -1 0 -2) #(9 7 -1 0 0 0 1 0 1 -1)
+  #(12 12 -1 0 -1 -1 0 -1 0 -2) #(11 11 -1 -1 0 -1 0 0 1 0)
+  #(14 14 0 -2 0 -1 1 -1 1 0) #(13 13 -1 0 0 0 0 -1 1 -1)
+  #(19 16 0 0 0 -1 0 -2 -1 -1) #(15 17 0 0 -1 -1 0 -1 1 -1)
+  #(16 18 0 0 0 -1 0 -2 1 -1) #(17 19 -1 0 0 0 1 0 0 -1))
+
+;; ------------------------------------------------------------------------------
+
+here is the table for the transitions , theres a bug in here ... somewhere ...
+
+#(00 #(1 1 -2 0 -1 0 0 0 1 0)
+  01 #(0 0 0 0 0 -1 0 -2 0 -3)  -- these 2 cycle 0 , 1         : 
+  02 #(2 2 -1 0 0 0 -1 -1 0 -1) -- single transition to itself : the box
+  03 #(6 4 -1 0 -1 -1 -1 -2 0 -2) --- 3 : 4 : 5 : 6 
+  04 #(3 5 -1 -1 -1 0 0 0 1 0)
+  05 #(4 6 -1 0 0 0 0 -1 0 -2)
+  06 #(5 3 1 0 1 -1 0 -1 -1 -1)
+  07 #(10 8 1 0 1 -1 1 -2 0 -2)  ---- 7 : 8 : 9 : 10
+  08 #(7 9 -1 0 -1 -1 0 -1 1 -1)
+  09 #(8 10 0 0 1 0 0 -1 0 -2)
+  10 #(9 7 -1 0 0 0 1 0 1 -1)
+  11 #(12 12 -1 0 -1 -1 0 -1 0 -2) --- 11 : 12  2 cycle
+  12 #(11 11 -1 -1 0 -1 0 0 1 0)
+  13 #(14 14 0 -2 0 -1 1 -1 1 0) ---  13 : 14 : 2 cycle
+  14 #(13 13 -1 0 0 0 0 -1 1 -1)
+  15 #(*18* 16 0 0 0 -1 0 -2 -1 -1) --- 15 : 16 : 17 : 18  : *bug* changed to 18
+  16 #(15 17 0 0 -1 -1 0 -1 1 -1)
+  17 #(16 18 0 0 0 -1 0 -2 1 -1)
+  18 #(17 *15* -1 0 0 0 1 0 0 -1)) ;; --- *bug* changed to 15
+
+
+2 bugs fixed.
+
+
+
+
 CL-USER> (defun f (x) (+ x 2))
 F
 CL-USER> (setq f 3)
@@ -123,9 +166,16 @@ if that option in ots is t (or non nil) then that option is shut, collision dere
 
 
 
+nice if had a variable elapsed that was updated automatically to tell us how much time had passed
+more or less the game clock
 
+have a uniform but unique identifier for piece
+hid is integer from 2 upwards , hid of 1 is the border
 
-
+represented on screen use code-char  takes a code -> produces alpha numeric character
+all characters uniform width - uniformity - check.
+can handle up to 0 to 255 , maybe first 30 are not textually representable on output ?
+can we make our own font perhaps... sprites ...
 
 
 ;;; --------------------------- 712 -------------------------------

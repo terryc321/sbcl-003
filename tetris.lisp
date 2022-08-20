@@ -3,7 +3,7 @@
   #(6 4 -1 0 -1 -1 -1 -2 0 -2) #(3 5 -1 -1 -1 0 0 0 1 0) #(4 6 -1 0 0 0 0 -1 0 -2) #(5 3 1 0 1 -1 0 -1 -1 -1)
   #(10 8 1 0 1 -1 1 -2 0 -2) #(7 9 -1 0 -1 -1 0 -1 1 -1)  #(8 10 0 0 1 0 0 -1 0 -2) #(9 7 -1 0 0 0 1 0 1 -1)
   #(12 12 -1 0 -1 -1 0 -1 0 -2) #(11 11 -1 -1 0 -1 0 0 1 0) #(14 14 0 -2 0 -1 1 -1 1 0) #(13 13 -1 0 0 0 0 -1 1 -1)
-	     #(19 16 0 0 0 -1 0 -2 -1 -1) #(15 17 0 0 -1 -1 0 -1 1 -1) #(16 18 0 0 0 -1 0 -2 1 -1) #(17 19 -1 0 0 0 1 0 0 -1)))
+	     #(18 16 0 0 0 -1 0 -2 -1 -1) #(15 17 0 0 -1 -1 0 -1 1 -1) #(16 18 0 0 0 -1 0 -2 1 -1) #(17 15 -1 0 0 0 1 0 0 -1)))
 (defvar hid 2)
 (defvar h2 0)(defvar h3 0)
 (defvar h4 0)(defvar h5 0)
@@ -17,34 +17,33 @@
 	       (setq h4 (+ x c4))  (setq h5 (+ y c5))
 	       (setq h6 (+ x c6))  (setq h7 (+ y c7))
 	       (setq h8 (+ x c8))  (setq h9 (+ y c9))
-	       (setf (aref ots 0) (if (or (> (aref bd (+ x c2) (+ y c3)) 0)
+	       (setf (aref ots 0) (if (or (> (aref bd (+ x c2) (+ y c3)) 0) ; instant collision
 					  (> (aref bd (+ x c4) (+ y c5)) 0)
 					  (> (aref bd (+ x c6) (+ y c7)) 0)
 					  (> (aref bd (+ x c8) (+ y c9)) 0))
-				      (throw 'died t)
-				      pk))
-	       (setf (aref ots 1) (if (or (> (aref bd (+ x c2 -1) (+ y c3)) 0)
-					  (> (aref bd (+ x c4 -1) (+ y c5)) 0)
+				      nil pk))
+	       (setf (aref ots 1) (if (or (> (aref bd (+ x c2 -1) (+ y c3)) 0) ;; 1 : left
+					  (> (aref bd (+ x c4 -1) (+ y c5)) 0) ;; same sprite moved left
 					  (> (aref bd (+ x c6 -1) (+ y c7)) 0)
 					  (> (aref bd (+ x c8 -1) (+ y c9)) 0))
 				      nil (make-array 3 :initial-contents (list s (- x 1) y))))
-	       (setf (aref ots 2) (if (or (> (aref bd (+ x c2 1) (+ y c3)) 0)
-					  (> (aref bd (+ x c4 1) (+ y c5)) 0)
+	       (setf (aref ots 2) (if (or (> (aref bd (+ x c2 1) (+ y c3)) 0) ;; 2 : right
+					  (> (aref bd (+ x c4 1) (+ y c5)) 0) ;; same sprite moved right
 					  (> (aref bd (+ x c6 1) (+ y c7)) 0)
 					  (> (aref bd (+ x c8 1) (+ y c9)) 0))
 				      nil (make-array 3 :initial-contents (list s (+ x 1) y))))
-	       (setf (aref ots 3) (if (or (> (aref bd (+ x c2) (+ y c3 -1)) 0)
-					  (> (aref bd (+ x c4) (+ y c5 -1)) 0)
+	       (setf (aref ots 3) (if (or (> (aref bd (+ x c2) (+ y c3 -1)) 0) ;; 3 : down
+					  (> (aref bd (+ x c4) (+ y c5 -1)) 0) ;; same sprite moved down
 					  (> (aref bd (+ x c6) (+ y c7 -1)) 0)
 					  (> (aref bd (+ x c8) (+ y c9 -1)) 0))
 				      nil (make-array 3 :initial-contents (list s x (- y 1)))))
-	       (setf (aref ots 4) (if (or (> (aref bd (+ x d2) (+ y d3)) 0)
-					  (> (aref bd (+ x d4) (+ y d5)) 0)
+	       (setf (aref ots 4) (if (or (> (aref bd (+ x d2) (+ y d3)) 0) ;; 4 : rotate
+					  (> (aref bd (+ x d4) (+ y d5)) 0) ;; different shape or sprites
 					  (> (aref bd (+ x d6) (+ y d7)) 0)
 					  (> (aref bd (+ x d8) (+ y d9)) 0))
 				      nil (make-array 3 :initial-contents (list pv x y))))
-	       (setf (aref ots 5) (if (or (> (aref bd (+ x e2) (+ y e3)) 0)
-					  (> (aref bd (+ x e4) (+ y e5)) 0)
+	       (setf (aref ots 5) (if (or (> (aref bd (+ x e2) (+ y e3)) 0) ;; 5 : rotate other direction
+					  (> (aref bd (+ x e4) (+ y e5)) 0) ;; different shape or sprites
 					  (> (aref bd (+ x e6) (+ y e7)) 0)
 					  (> (aref bd (+ x e8) (+ y e9)) 0))
 				      nil (make-array 3 :initial-contents (list nx x y))))))
@@ -78,8 +77,11 @@
    done))
 (defvar win) ; ncurses win
 (defvar msg-y 2)
-(defun msg(m)(curses::mvprintw msg-y 1 (format nil "~a" m))(incf msg-y))
+(defun msg(m &optional (x 1) (y msg-y)) 
+  (cond ((and (= x 1)(= y msg-y)) (curses::mvprintw y x (format nil "~a" m)) (incf msg-y))
+	(t (curses::mvprintw y x (format nil "~a" m)))))
 (defun put(x y m) (curses::mvprintw (- 40 y) (+ (* x 3) 10) (format nil "~a" m)))
+(defun cput(x y m) (put x y (code-char (+ m (char-code #\a)))))
 (defun show()
   (curses::mvprintw 1 1 (format nil "tk ~a " tk))
   (loop for y from 21 downto 0 do
@@ -87,38 +89,50 @@
       (let ((s (aref bd x y)))
 	(cond
 	  ((zerop s) (put x y " "))
-	  (t (put x y s))))))
-  (put h2 h3 hid)
-  (put h4 h5 hid)
-  (put h6 h7 hid)
-  (put h8 h9 hid)
+	  (t (cput x y s))))))
+  (cput h2 h3 hid)
+  (cput h4 h5 hid)
+  (cput h6 h7 hid)
+  (cput h8 h9 hid)
   (curses::refresh))
 (defvar tk-lim 10000000)
+(defvar clock 0)
+(defun elapsed() (- (get-universal-time) clock))
+(defun start-timer() (setq clock (get-universal-time)))
+(defun out-of-time-p() (> (elapsed) 2))
+(defvar status "alive")
+(defvar ch 0)
 (defun gamlup()
-  (new-gam)
-  (setq msg-y 1)
   (prog ()
+   new-gam
+     (new-gam)
+     (progn (setf (aref pk 0) 17)  (setf (aref pk 1) 5)  (setf (aref pk 2) 20))
+     (setq msg-y 1)
+
+   new-level
+     (start-timer)
    top
-     (incf tk)
+     (setq ch (curses::wgetch win))
+     (when (= ch (char-code #\q)) (msg "qut") (go over)) ; qut	 
+
+     (msg (format nil ": elapsed [~a] " (elapsed)) 30 1)
      (show)
      (ots) ; brins
-     (when (not (and 'stay (aref ots 0))) (msg "doa")
-       (go over))
-     (when (or (and 'out-of-time (> tk tk-lim) (not (aref ots 3))) ; fkd
+     (when (not (and 'stay (aref ots 0)))
+       (setq status "dead")(msg status)(go over))
+     (when (or (and 'out-of-time (out-of-time-p) (not (aref ots 3))) ; fkd
 	       (not (or (aref ots 1)(aref ots 2)(aref ots 3)(aref ots 4)(aref ots 5)))) ;;nowhere to go
        (msg "fix")
        (fix-here)
        (scroll-down) 
        (new-pk) 
-       (go top))
-     (when (and 'out-of-time (> tk tk-lim)); dwn forced
+       (go new-level))
+     (when (and 'out-of-time (out-of-time-p) (> tk tk-lim)); dwn forced
        (msg "<time")
        (setq pk (aref ots 3))
        (setq tk 0) 
-       (go top))
+       (go new-level))
      ;; free will
-     (let ((ch (curses::wgetch win)))
-       (when (= ch (char-code #\q)) (msg "qut") (go over)) ; qut	 
      (when (and 'left (= ch (char-code #\a)) (msg "lft") (aref ots 1)) ;lft
        (setq pk (aref ots 1))
        (go top))
@@ -134,13 +148,19 @@
      (when (and 'rot2 (= ch (char-code #\w))(msg "rot3") (aref ots 5));rot2
        (setq pk (aref ots 5))
        (go top))
-     ); key chk
+     
      (go top)
-   over)
-  ); end gamlup
+   over
+     (msg "** WOULD YOU LIKE TO PLAY A NEW GAME ? y / n > ")
+     (setq ch (curses::wgetch win))
+     (when (= ch (char-code #\y)) (msg "qut qut") (go really-over)) ; qut qut	 
+     (when (= ch (char-code #\n)) (go new-gam)) ; qut qut	 
+   really-over );prog
+  );;gamlup
 (defun gamset() (setq win (curses::initscr))(curses::clear)(curses::raw)(curses::noecho)(curses::nodelay win t)(curses::cbreak)(curses::mvprintw 5 5 "we are the champions !"))
 (defun gamclr() (curses::clrtoeol)(curses::endwin))
 (defun run() (unwind-protect (progn (gamset) (gamlup)) (gamclr)))
+
 
 
 
