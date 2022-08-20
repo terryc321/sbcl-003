@@ -1,5 +1,130 @@
 
 
+new bug now !.
+
+throws index out of array ...
+
+when sbcl throws an exception whilst using ncurses it looks like it corrupts sbcl
+
+
+CL-USER> (defvar a (make-array 3 :initial-contents '(1 2 3))
+	   )
+A
+CL-USER> a
+#(1 2 3)
+CL-USER> (aref a 0)
+1
+CL-USER> (aref a 1)
+2
+CL-USER> (aref a 2)
+3
+CL-USER> (aref a 3)
+; Evaluation aborted on #<SB-INT:INVALID-ARRAY-INDEX-ERROR expected-type: (INTEGER 0 (3)) datum: 3>.
+
+Invalid index 3 for (SIMPLE-VECTOR 3), should be a non-negative integer below 3.
+   [Condition of type SB-INT:INVALID-ARRAY-INDEX-ERROR]
+
+
+
+;; ---------------------- off by bug -------------------------------------------
+
+
+
+(defun example ()
+  (handler-bind
+      ((sb-int:invalid-array-index-error
+	 (lambda (err)
+	   (curses::clrtoeol) ;; clean up curses terminal 
+	   (curses::endwin)
+	   (format t "Got error: ~a~%" err))))
+    (let ((arr (make-array 3 :initial-contents '(1 2 3))))
+      (setf (aref arr 3) 5)
+      (format t "arr = ~a ~%" arr))))
+
+(example)
+
+
+    
+
+
+
+
+
+(defun divide-with-restarts (x y)
+  (restart-case (/ x y)
+    (return-zero ()
+      :report "Return 0"
+      0)
+    (divide-by-one ()
+      :report "Divide by 1"
+      (/ x 1))
+    (set-new-divisor (value)
+      :report "Enter a new divisor"
+      ;;
+      ;; Ask the user for a new value:
+      :interactive (lambda () (prompt-new-value "Please enter a new divisor: "))
+      ;;
+      ;; and call the divide function with the new value…
+      ;; … possibly catching bad input again!
+      (divide-with-restarts x value))))
+
+(defun prompt-new-value (prompt)
+  (format *query-io* prompt)  ;; *query-io*: the special stream to make user queries.
+  (force-output *query-io*)   ;; Ensure the user sees what he types.
+  (list (read *query-io*)))   ;; We must return a list.
+
+;;(divide-with-restarts 3 0)
+
+(defun divide-and-handle-error (x y)
+  (handler-bind
+      ((division-by-zero (lambda (c)
+                (format t "Got error: ~a~%" c) ;; error-message
+                (format t "and will divide by 1~&")
+                (invoke-restart 'divide-by-one))))
+    (divide-with-restarts x y)))
+;;(divide-and-handle-error 3 0)
+
+
+
+
+;; -----------------------------------------------------------------------------
+
+
+(defun divide-with-restarts (x y)
+  (restart-case (/ x y)
+    (return-zero ()
+      :report "Return 0"
+      0)
+    (divide-by-one ()
+      :report "Divide by 1"
+      (/ x 1))
+    (set-new-divisor (value)
+      :report "Enter a new divisor"
+      ;;
+      ;; Ask the user for a new value:
+      :interactive (lambda () (prompt-new-value "Please enter a new divisor: "))
+      ;;
+      ;; and call the divide function with the new value…
+      ;; … possibly catching bad input again!
+      (divide-with-restarts x value))))
+
+(defun prompt-new-value (prompt)
+  (format *query-io* prompt)  ;; *query-io*: the special stream to make user queries.
+  (force-output *query-io*)   ;; Ensure the user sees what he types.
+  (list (read *query-io*)))   ;; We must return a list.
+
+;;(divide-with-restarts 3 0)
+
+(defun divide-and-handle-error (x y)
+  (handler-bind
+      ((division-by-zero (lambda (c)
+                (format t "Got error: ~a~%" c) ;; error-message
+                (format t "and will divide by 1~&")
+                (invoke-restart 'divide-by-one))))
+    (divide-with-restarts x y)))
+;;(divide-and-handle-error 3 0)
+
+
 
 ;; ---------------------- off by bug -------------------------------------------
 CL-USER> tetris::tb
