@@ -1,311 +1,39 @@
+(defpackage "TETRIS" (:use "CL" "CL-USER"))(in-package "TETRIS")
+(defvar tb #(#(1 1 -2 0 -1 0 0 0 1 0) #(0 0 0 0 0 -1 0 -2 0 -3) #(2 2 -1 0 0 0 -1 -1 0 -1)
+  #(6 4 -1 0 -1 -1 -1 -2 0 -2) #(3 5 -1 -1 -1 0 0 0 1 0) #(4 6 -1 0 0 0 0 -1 0 -2) #(5 3 1 0 1 -1 0 -1 -1 -1)
+  #(10 8 1 0 1 -1 1 -2 0 -2) #(7 9 -1 0 -1 -1 0 -1 1 -1)  #(8 10 0 0 1 0 0 -1 0 -2) #(9 7 -1 0 0 0 1 0 1 -1)
+  #(12 12 -1 0 -1 -1 0 -1 0 -2) #(11 11 -1 -1 0 -1 0 0 1 0) #(14 14 0 -2 0 -1 1 -1 1 0) #(13 13 -1 0 0 0 0 -1 1 -1)
+	     #(19 16 0 0 0 -1 0 -2 -1 -1) #(15 17 0 0 -1 -1 0 -1 1 -1) #(16 18 0 0 0 -1 0 -2 1 -1) #(17 19 -1 0 0 0 1 0 0 -1)))
+(defvar bd (make-array '(12 22))) (defvar pk #(0 0 0))(defvar tk 0) (defvar ots #(0 0 0 0 0 0))
+(defun pk()  (setf (aref pk 0) (random 20))  (setf (aref pk 1) 5)  (setf (aref pk 2) 20)) ;;<-- shorthand ?
+(defun ots() (let* ((s (aref pk 0)) (x (aref pk 1)) (y (aref pk 2)) (en (aref tb s))
+			(pv (aref en 0)) (nx (aref en 1)) (en2 (aref tb pv)) (en3 (aref tb nx))	(c2 (aref en 2))(c3 (aref en 3))(c4 (aref en 4))(c5 (aref en 5))(c6 (aref en 6))(c7 (aref en 7))(c8 (aref en 8))(c9 (aref en 9))(d2 (aref en2 2))(d3 (aref en2 3))(d4 (aref en2 4))(d5 (aref en2 5))(d6 (aref en2 6))(d7 (aref en2 7))(d8 (aref en2 8))(d9 (aref en2 9))(e2 (aref en3 2))(e3 (aref en3 3))(e4 (aref en3 4))(e5 (aref en3 5))(e6 (aref en3 6))(e7 (aref en3 7))(e8 (aref en3 8))(e9 (aref en3 9)))
+	       (setf (aref ots 0) (or (> (aref (aref bd (+ x c2)) (+ y c3)) 0) (> (aref (aref bd (+ x c4)) (+ y c5))0) (> (aref (aref bd (+ x c6)) (+ y c7)) 0) (> (aref (aref bd (+ x c8)) (+ y c9)) 0)))
+	       (setf (aref ots 1) (or (> (aref (aref bd (+ x c2 -1)) (+ y c3)) 0) (> (aref (aref bd (+ x c4 -1)) (+ y c5))0) (> (aref (aref bd (+ x c6 -1)) (+ y c7)) 0) (> (aref (aref bd (+ x c8 -1)) (+ y c9)) 0)))
+	       (setf (aref ots 2) (or (> (aref (aref bd (+ x c2 1)) (+ y c3)) 0) (> (aref (aref bd (+ x c4 1)) (+ y c5))0) (> (aref (aref bd (+ x c6 1)) (+ y c7)) 0) (> (aref (aref bd (+ x c8 1)) (+ y c9)) 0)))
+	       (setf (aref ots 3) (or (> (aref (aref bd (+ x c2)) (+ y c3 -1)) 0) (> (aref (aref bd (+ x c4)) (+ y c5 -1))0) (> (aref (aref bd (+ x c6)) (+ y c7 -1)) 0) (> (aref (aref bd (+ x c8)) (+ y c9 -1)) 0)))
+	       (setf (aref ots 4) (or (> (aref (aref bd (+ x d2)) (+ y d3)) 0) (> (aref (aref bd (+ x d4)) (+ y d5))0) (> (aref (aref bd (+ x d6 1)) (+ y c7)) 0) (> (aref (aref bd (+ x d8 1)) (+ y d9)) 0)))
+	       (setf (aref ots 5) (or (> (aref (aref bd (+ x e2)) (+ y e3)) 0) (> (aref (aref bd (+ x e4)) (+ y e5))0) (> (aref (aref bd (+ x e6 1)) (+ y e7)) 0) (> (aref (aref bd (+ x e8 1)) (+ y e9)) 0)))))
 
 
 
-(defpackage "TETRIS"
-  (:use "CL" "CL-USER"))
 
-(in-package "TETRIS")
 
 
-   1    4  4   2 2  2   4
-  box  _| |_   ~ ~  |   |-
 
+		   
 
-D1  -2 0 -1 0 0 0 1 0  brk 0 0 0 -1 0 -2 0 -3 end
 
-D2  -1 0  0 0  -1 -1 0 -1  end
 
-D3  -1 0 -1 -1 -1 -2 0 -2  brk -1 -1 -1 0 0 0 1 0 brk
-    -1 0 0 0 0 -1 0 -2     brk  1 0 1 -1 0 -1 -1 -1 end
 
-D4  1 0 1 -1 1 -2 0 -2  brk     -1 0 -1 -1 0 -1 1 -1 brk
-     0 0 1 0 0 -1 0 -2  brk     -1 0 0 0 1 0 1 -1  end
 
-D5  -1 0 -1 -1 0 -1 0 -2  brk -1 -1 0 -1 0 0 1 0 end
 
-D6   0 -2 0 -1 1 -1 1 0  brk  -1 0 0 0 0 -1 1 -1 end
 
-D7   0 0 0 -1 0 -2 -1 -1  brk  0 0 -1 -1 0 -1 1 -1  brk
-     0 0 0 -1 0 -2 1 -1  brk -1 0 0 0 1 0 0 -1 end
 
 
-;;----------------------------------------------------------
-;; state transition
 
-S1   0  ---->> 1   Flip/flop
-     | <<------|   
 
-S2   2  ->>  2  Right/ Left
-     | <<----|
 
-S3   3  ->  4  ->  5  ->  6        
-     |<<------------------|   Right
-
-S3   3  <-  4  <-  5  <-  6   Left    
-     |------------------>>-|
-
-
-S4   7  ->  8  ->  9  ->  10   Right
-     |<<------------------|
-
-
-     7 <-  8 <-- 9  <--  10    Left
-     |----------------->>>|
-
-
-S5   11 --> 12   flip /flop 
-      <----
-
-S6   13 <<--- 14
-      ---->->
-
-
-S7   15 -> 16 -> 17 -> 18
-     | <<---------------|
-
-
-S7   15 <-- 16 <-- 17 <-- 18
-     |------------------>>|
-
-
-
-
-
-
-
-;; ------------------- ncurses gui code  -------------------------------------
-;; iterate over board - see if any piece on board conflicts with piece
-;; only like 4 checks to do
-(defun any-conflicts-on-pieces-p(pieces board)
-  (cond
-    ((null pieces) nil)
-    (t (destructuring-bind (x y) (car pieces)
-	 (let ((whos-on-first (aref board x y)))	     
-	   (cond
-	     ((and (integerp whos-on-first)
-		   (> whos-on-first 0))
-	      t)
-	     (t (any-conflicts-on-pieces-p (cdr pieces) board))))))))
-
-
-
-
-
-(defun any-conflicts?(piece board)
-  (any-conflicts-on-pieces-p (tetris::realise piece) board))
-
-  
-
-
-
-
-;;; --------------------------- 712 -------------------------------
-                ;; _ _ _ _ _ _ _ _ _ _ _ _
-                ;;  T E T R I Z   v  1 . 0
-                ;; _ _ _ _ _ _ _ _ _ _ _ _
-                ;;
-                ;;(0,21)                           (11,21)
-                ;;  X  X  X  X  X  X  X  X  X  X  X  X 
-                ;;  X  .  .  .  .  .  .  .  .  .  .  X 
-                ;;  X  .  .  .  .  .  .  .  .  .  .  X 
-                ;;  X  .  .  .  .  .  .  .  .  .  .  X 
-                ;;  X  .  .  .  .  .  .  .  .  .  .  X 
-                ;;  X  .  .  .  X  .  .  .  .  .  .  X 
-                ;;  X  .  .  .  X  X  .  .  .  .  .  X 
-                ;;  X  .  .  .  .  X  .  .  .  .  .  X 
-                ;;  X  .  .  .  .  .  .  .  .  .  .  X 
-                ;;  X  .  .  .  .  .  .  .  .  .  .  X 
-                ;;  X  .  .  .  .  .  .  .  .  .  .  X 
-                ;;  X  .  .  .  .  .  .  .  .  .  .  X 
-                ;;  X  .  .  .  .  .  .  .  .  .  .  X 
-                ;;  X  .  .  .  .  .  .  .  .  .  .  X 
-                ;;  X  .  .  .  .  .  .  .  .  .  .  X 
-                ;;  X  .  .  .  .  .  .  .  .  .  .  X 
-                ;;  X  .  .  .  .  .  .  .  .  .  .  X 
-                ;;  X  .  .  .  .  .  .  X  .  .  .  X 
-                ;;  X  .  .  .  .  .  .  X  .  .  .  X 
-                ;;  X  .  .  .  .  .  .  X  .  .  .  X 
-                ;;  X  .  .  .  .  .  .  X  .  .  .  X 
-                ;;  X  X  X  X  X  X  X  X  X  X  X  X 
-                ;; (0,0)                            (11,0)
-                ;;  tetris board is 10 wide  x 20 high
-                ;; _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
-
-
-
-(defun filter(fn xs)
-  (cond
-    ((null xs) xs)
-    ((funcall fn (car xs)) (cons (car xs) (filter fn (cdr xs))))
-    (t (filter fn (cdr xs)))))
-
-;; test cases ...
-(filter #'oddp '(1 2 3 4 5 6 7 8 9 10))
-;;(1 3 5 7 9)
-
-(filter #'evenp '(1 2 3 4 5 6 7 8 9 10))
-;;(2 4 6 8 10)
-
-(dolist (x '(1 2 3 )) (format t "x = ~a ~%" x))
-;; x = 1 
-;; x = 2 
-;; x = 3 
-;; NIL
-;; investigate curried functions
-;; higher order functions
-;; re-usable code
-;; lazy functions
-;; smaller procedures / functions are easier to debug and reason about
-;; compose small routines to solve larger problems
-;; keep a tally on how many bits of pieces are on each row
-(defun tally-row(y board)
-  (length (filter (lambda (sq)
-		    (let ((sy (second sq)))
-		      (= sy y)))
-		  board)))
-
-
-;; tests
-(tally-row 1 '((1 1)(2 1)(3 1)(4 1)(5 1)(6 1)(7 1)(8 1)(9 1)(10 1)))
-
-10
-
-(tally-row 1 '((1 1)(2 1)(3 1)(4 1)(5 1)(6 1)(7 1)(8 1)(9 1)))
-
-9
-
-
-(defun move-all-items-down-if-above-row(row board)
-  (mapcar (lambda (sq)
-	    (let ((y (second sq)))
-	      (cond
-		((> y row) (let ((x (first sq)))
-			     (list x (- y 1))))
-		(t sq))))
-	  board))
-
-(move-all-items-down-if-above-row 1 '((1 5)(1 1)(2 1)(3 1)(4 1)(5 1)(6 1)(7 1)(8 1)(9 1)))
-;;((1 4) (1 1) (2 1) (3 1) (4 1) (5 1) (6 1) (7 1) (8 1) (9 1))
-
-(move-all-items-down-if-above-row 0 '((1 1)(2 1)(3 1)(4 1)(5 1)(6 1)(7 1)(8 1)(9 1)))
-;;((1 0) (2 0) (3 0) (4 0) (5 0) (6 0) (7 0) (8 0) (9 0))
-
-
-;; tally a row , if it is full , eliminate it and move all pieces down by 1
-(defun tally-and-move(row board)
-  (let ((full-row 10))
-    (cond
-      ((>= row 21) board)
-      ((= (tally-row row board) full-row)
-       (tally-and-move (+ row 1)
-		       (move-all-items-down-if-above-row row board)))
-      (t (tally-and-move (+ row 1) board)))))
-  
-
-;; this causes a heap exhaustion - hmm .
-;;
-;; (loop for i from 1 to 10 do
-;;   (format t "i = ~A ~%" i)
-;;   (setq i (- i 1)))
-
-;; empty square is 
-(defvar *empty-tetris-square* " ")
-
-
-(defun tetris-square-empty(board x y)
-  (equalp *empty-tetris-square* (aref board x y)))
-
-
-
-;; not checking x y are valid for board array
-;; x y may not even be numbers
-;; board may be corrupted
-;; .... can of worms ....
-(defun tetris-square-occupied-p(board x y)
-  (not (tetris-square-empty board x y)))
-
-
-(defun tetris-full-row-p(board y)
-  (catch 'know
-  (loop for x from 1 to 10 do
-    (when (tetris-square-empty board x y)
-      (throw 'know nil)))
-  t))
-
-(defun tetris-eliminate-row(board y)
-  (loop for x from 1 to 10 do
-    (setf (aref board x y) *empty-tetris-square*)))
-
-;; can tetris piece be outside the (0,0) to (11,21) inclusive set of valid squares
-;; what if we want to have an arbitrary size tetris board
-;; multiple falling pieces ?
-;; all different colours
-;; all different minions gru
-;; themed tetris
-
-;; job done
-(defun tetris-scroll-board-down(board row)
-  (loop for y from (+ row 1) to 21 do
-    (loop for x from 1 to 10 do
-      (setf (aref board x (- y 1))
-	    (aref board x y)))))
-
-
-;; how could the program go wrong ?
-;; out of spec ?
-;; like piece wandering off past border of the tetris board (0,0) to (11,21) ?
-;; 
-;; list of squares '( (1 1)(4 2)(3 4).... )
-;; 30 arbitrary number - as long as its bigger than height of the tetris table
-;; when row gets completed , it gets eliminated , then everything above gets scrolled down
-;;
-;; say four rows to be eliminated , ie placed long flat down a single slot 
-;; on any particular move , going to remove at most 4 layers . q.e.d.
-;; 
-(defun eliminate-completed-rows(board)
-  (catch 'done
-    (let ((y 1))
-      (loop
-	(cond
-	  ((not (< y 22)) (throw 'done board))
-	  ((tetris-full-row-p board y)
-	   (tetris-eliminate-row board y)
-	   (tetris-scroll-board-down board y))
-	  (t (incf y)))))))
-
-
-
-;; no do while unless use loop macro
-;;
-;; (let ((y 1))
-;;   (do-while (< y 10)
-;;     (format t "y = ~a ~%" y)
-;;     (incf y)))
-;; destructing bind
-(defun combine-piece-and-board(piece board)
-  (let ((squares (realise piece)))
-    (dolist (sq squares)
-      (destructuring-bind (x y) sq
-	(setf (aref board x y) 2)))))
-
-
-
-(defvar *tetris-piece-constructors*
-  (list #'make-flat
-	#'make-box
-	#'make-right-bend
-	#'make-left-bend
-	#'make-elbow
-	#'make-junction))
-
-
-		 
-;;(game)
-;; ------------------------------------ bootstrap sbcl ffi ncurses code ----------------
-;; get back into the curses packages and do the grunt of the "graphical" (in a 1960's tty terminal ?)
-;; to access tetris routines write tetris 2 colons then function or variable after
-;; tetris::
-;; -------------------- back to CURSES ------------
 (in-package "CURSES")
 
 (format t "we survived to here anyhow ...~%")
