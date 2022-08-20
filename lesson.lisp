@@ -107,6 +107,8 @@ ots options
 if that option in ots is t (or non nil) then that option is shut, collision dere.
 
 
+
+(+ 5 -1)
 (destructuring-bind (a b c) (coerce 'array (list 1 2 3))
    (list a b c))
    
