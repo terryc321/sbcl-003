@@ -183,6 +183,8 @@ unbelievable
 ;; playable area x from 1 to 10 inclusive, thats width 10 
 
 
+;; decrease timer - when timer hits a limit , player is moved down , as timer limit is reduced,
+;; moves the player faster .. er . gives player impression of being under pressure.
 
 
 ;; pick a square (random 20)

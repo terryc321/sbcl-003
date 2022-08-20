@@ -53,7 +53,7 @@
 				      nil (make-array 3 :initial-contents (list nx x y))))))
 ;;ok?
 
-
+(defun hid() (setq hid 0))
 
 ;; clr bd  -- put my border around it
 (defun clr()
@@ -61,20 +61,20 @@
   (loop x from 0 to 11 do (setf (aref bd x 0) 1) (setf (aref bd x 21) 1))
   (loop for y from 0 to 21 do (setf (aref bd 0 y) 1) (setf (aref bd 11 y) 1)))
 
-;; clr bd , new puk
-(defun new-gam() (clr) (pk))
+;; clr bd , reset hid , new puk
+(defun new-gam() (clr)(hid)(pk))
 
 (defun new-pk() (pk))
 
 ;; (h2,h3) , (h4,h5) , (h6,h7) , (h8,h9)
 (defun fix-here()
-  (incf hid)
+  (incf hid) ;; id of piece
   (setf (aref bd h2 h3) hid)
   (setf (aref bd h4 h5) hid)
   (setf (aref bd h6 h7) hid)
   (setf (aref bd h8 h9) hid))
   
-(defun scroll-if-won()
+(defun scroll-down()
   (prog ()
    top
      (loop for y from 1 to 20 do
@@ -90,50 +90,62 @@
 	   (go top))))
    done))
 
+(defun show()
+  (curses::mvprintw 6 5 (format nil "tk ~a " tk))
 
 
-;; game loop ....
+  
+  (curses::refresh)
+  )
+(defvar tk-lim 10000)
+
 (defun gamlup()
+  (new-gam)
   (prog ()
-     top
-     (ots) ;; perform all the collision tests and deliver them into an array of 5 objects either nil
-     ;; or 3 value puck : state pos-x pos-y
-     (when (not (and 'stay (aref ots 0))) ;; collision on arrival !
-       (go done))
-     (when (or (and 'out-of-time
-		    (not (aref ots 3))) ;;out time + cant go down
-	     (not (or (aref ots 1)(aref ots 2)(aref ots 3)(aref ots 4)(aref ots 5)))) ;;nowhere to go
-       (fix-here) ;; write piece onto the board
-       (scroll-if-won) ;; clear filled rows and scroll screen down , rinse n repeat
-       (new-pk) ;; next piece 
+   top
+     (incf tk)
+     (show)
+     (ots) ; brins
+     (when (not (and 'stay (aref ots 0))) ;doa
+       (go over))
+     (when (or (and 'out-of-time (> tk tk-lim) (not (aref ots 3))) ; fkd
+	       (not (or (aref ots 1)(aref ots 2)(aref ots 3)(aref ots 4)(aref ots 5)))) ;;nowhere to go
+       (fix-here)
+       (scroll-down) 
+       (new-pk) 
        (go top))
-     (when (and 'out-of-time (< tk 100)) ;; descend
+     (when (and 'out-of-time (> tk tk-lim)); dwn forced
        (setq pk (aref ots 3))
-       (setq tk 100000) ;; reset the ticker
+       (setq tk 0) 
        (go top))
-     (when (and 'left (aref ots 1)) ;; if player wants to go left and thats an option let it be
+     ;; free will
+     (let ((ch (curses::wgetch win)))
+       (when (= ch (char-code #\q)) (go over)) ; qut	 
+     (when (and 'left (= ch (char-code #\a)) (aref ots 1)) ;lft
        (setq pk (aref ots 1))
        (go top))
-     (when (and 'down (aref ots 2)) ;; if player wants to go right and thats an option let it be
+     (when (and 'down (= ch (char-code #\s)) (aref ots 2)) ;dwn
        (setq pk (aref ots 2))
        (go top))
-     (when (and 'right (aref ots 3)) ;; if player wants to go down and thats an option let it be
+     (when (and 'right (= ch (char-code #\d)) (aref ots 3));rgt
        (setq pk (aref ots 3))
        (go top))
-     (when (and 'rot (aref ots 4)) ;; if player wants to go rotate
+     (when (and 'rot (= ch (char-code #\e)) (aref ots 4));rot
        (setq pk (aref ots 4))
        (go top))
-     (when (and 'rot2 (aref ots 5)) ;; if player wants to rotate other way 
+     (when (and 'rot2 (= ch (char-code #\w)) (aref ots 5));rot2
        (setq pk (aref ots 5))
        (go top))
-     ;; decrease timer - when timer hits a limit , player is moved down , as timer limit is reduced,
-     ;; moves the player faster .. er . gives player impression of being under pressure.
-  (setq tk (- tk 1))
-  (go top)
-  done))
+     ); key chk
+     (go top)
+   over)
+  ); end gamlup
+
+(defun gamset() (setq win (curses::initscr))(curses::clear)(curses::raw)(curses::noecho)(curses::nodelay win t)(curses::cbreak)(curses::mvprintw 5 5 "we are the champions !"))
+(defun gamclr() (curses::clrtoeol)(curses::endwin))
+(defun run() (unwind-protect (progn (gamset) (gamlup)) (gamclr)))
 
 
- 
 
 
 

@@ -1,7 +1,5 @@
 
 
-
-
 ;; reasoning
 ;; used setf -- should we eliminate this from code
 ;;
@@ -1051,11 +1049,6 @@
 		 (go top)))) ;; ----- key #\m -----
 	  (t (go top)))))))
 
-
-
-
-
-
 (defun run()
   (unwind-protect
        (progn (initialise-ncurses)
@@ -1063,10 +1056,6 @@
     (cleanup-ncurses)))
 
 ;; q & a
-
-
-
-
 
 
 ;; to start the game , call the run procedure 
