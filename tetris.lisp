@@ -76,21 +76,18 @@
   (setf (aref bd h6 h7) hid)
   (setf (aref bd h8 h9) hid)
   (incf hid))
+
 (defun scroll-down()
-  (prog ()
-   top
-     (loop for y from 1 to 20 do
-       (let ((tot 0))
-	 (loop for x from 1 to 10 do
-	   (when
-	       (> (aref-bd x y) 0)
-	     (incf tot))) ;; rows  zer0 and 21 are for the border of game
-	 (when (= tot 10) ;; full row - move all higher rows up to including row 20th down,  
-	   (loop for dy from (+ y 1) to 20 do
-	     (loop for dx from 1 to 10 do
-	       (setf (aref bd dx dy)  (aref bd dx dy))))
-	   (go top))))
-   done))
+  (let ((tot 0))
+    (loop for y from 1 to 20 do
+      (setq tot 0)
+      (loop for x from 1 to 10 do
+	(if (> (aref-bd x y) 0) (incf tot)))
+      (when (= tot 10)
+	(loop for y from (+ y 1) to 20 do
+	  (loop for x from 1 to 10 do
+	    (setf (aref bd x (- y 1)) (aref bd x y))))))))
+	  
 (defvar win) ; ncurses win
 (defvar msg-y 2)
 (defun msg(m &optional (x 1) (y msg-y)) ;; like a teletype terminal
@@ -102,6 +99,7 @@
 	(t (curses::mvprintw y x (format nil "~a" m)))))
 (defun put(x y m) (curses::mvprintw (- 40 y) (+ (* x 3) 10) (format nil "~a" m)))
 (defun cput(x y m) (put x y (code-char (+ m (char-code #\a)))))
+
 (defun show()
   (curses::mvprintw 1 1 (format nil "tk ~a " tk))
   (loop for y from 21 downto 0 do
@@ -187,13 +185,37 @@
   (gamlup)
   (gamclr))
 
+
+
+;;------ state of computation ------------
+(defun dump-state()
+  (format t "~%tetris board - excluding the moving piece~%")
+  (loop for y from 21 downto 0 do
+    (format t "~%")
+    (loop for x from 0 to 11 do
+      (let ((s (aref bd x y)))
+	(cond
+	  ((zerop s) (format t " "))
+	  (t (format t "~a" (code-char (+ s (char-code #\a)))))))))
+  (format t "~%~%moving piece has coordinates ~%")
+  (format t "h2,h3 (~a,~a) " h2 h3)
+  (format t "h4,h5 (~a,~a) " h4 h5)
+  (format t "h6,h7 (~a,~a) " h6 h7)
+  (format t "h8,h9 (~a,~a) " h8 h9)
+  (format t "~%")
+  (sb-debug:list-backtrace)
+  )
+
 (defun recover-from-ncurses()
   (curses::clrtoeol) ;; clean up curses terminal 
-  (curses::endwin))
+  (curses::endwin)
+  (dump-state))
 
   
 (defun run()
   (sb-ext:enable-debugger)
+  (setq sb-debug:*debug-beginner-help-p* t)
+  
   (handler-bind
       ((sb-int:invalid-array-index-error
 	 (lambda (err)
@@ -204,6 +226,11 @@
 	   (recover-from-ncurses)
 	   (format t "Got interrupted: ~a~%" err))))
     (run-normal)))
+
+
+
+
+
 
 
 

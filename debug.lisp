@@ -1,5 +1,13 @@
 
 
+
+
+
+
+
+
+;; ----------------------------- old stuff -------------------------------------------
+
 ;; reasoning
 ;; used setf -- should we eliminate this from code
 ;;
